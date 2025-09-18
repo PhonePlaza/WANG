@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# allow example env files (override the pattern above)
+!.env.example
+!.env.local.example
