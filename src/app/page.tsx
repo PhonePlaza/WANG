@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-export default function Home() {
+export default function Mainpage() {
   return (
     <main className="min-h-dvh grid place-items-center p-8">
       <Link href="/auth/login" className="rounded-xl border px-4 py-3">

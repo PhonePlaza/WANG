@@ -36,6 +36,4 @@ export async function middleware(req: NextRequest) {
   return res
 }
 
-export const config = {
-  matcher: ['/dashboard/:path*', '/groups/:path*', '/trip/:path*'],
-}
+export const config = { matcher: ['/(app)/(.*)'] }
