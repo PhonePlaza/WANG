@@ -1,0 +1,24 @@
+/* styles/TripDatePicker.css */
+.react-datepicker-custom {
+  width: 3rem; /* กว้างขึ้น */
+  font-size: 1rem; /* ตัวอักษรใหญ่ */
+}
+
+.react-datepicker__header {
+  font-size: 1rem;
+}
+.react-datepicker__day-name {
+  width: 5rem;        
+  height: 3rem;       
+  line-height: 3rem;  
+  font-size: 1rem; 
+  text-align: center; 
+}
+
+.react-datepicker__day {
+  width: 5rem;        
+  height: 3rem;        
+  line-height: 3rem;   
+  font-size: 1rem;     
+  text-align: center;
+}
