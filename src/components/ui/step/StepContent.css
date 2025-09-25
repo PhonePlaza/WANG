@@ -1,0 +1,72 @@
+.step-form {
+  max-width: 500px;
+  margin: 20px auto;
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.step-content {
+  min-height: 100px;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.step-circles-fixed {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 20px;
+  width: 50%;
+}
+
+/* วงกลม */
+.step-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #eee;
+  color: #555;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  position: relative;
+  z-index: 1;
+}
+
+/* เส้นเชื่อมแต่ละวง */
+.step-circle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-left: 5px;
+  width: 200px;   
+  height: 3px;
+  background-color: #eee;
+  transform: translateY(-50%);
+  z-index: -1;
+}
+
+/* ไม่ให้วงกลมสุดท้ายมีเส้นต่อ */
+.step-circle:last-child::after {
+  display: none;
+}
+
+/* วงกลมที่เสร็จแล้ว */
+.step-circle.completed {
+  background-color: #4caf50;
+  color: white;
+}
+
+/* วงกลมที่ active */
+.step-circle.active {
+  border: 3px solid #4caf50;
+  background-color: white;
+  color: #4caf50;
+}
+
+/* เส้นเชื่อมของวงที่เสร็จแล้วเป็นเขียว */
+.step-circle.completed::after {
+  background-color: #4caf50;
+}
