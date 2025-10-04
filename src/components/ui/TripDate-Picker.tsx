@@ -8,7 +8,7 @@ import "./TripDatePicker.css";
 interface TripDateRangePickerProps {
   tripStartDate: Date;
   tripEndDate: Date;
-  onChange?: (start: Date, end: Date) => void; // เพิ่มตรงนี้
+  onChange?: (start: Date, end: Date) => void; 
 }
 
 export default function TripDateRangePicker({
@@ -26,7 +26,7 @@ export default function TripDateRangePicker({
         const [start, end] = dates;
         setStartDate(start);
         setEndDate(end);
-        if (start && end && onChange) onChange(start, end); // เรียก onChange
+        if (start && end && onChange) onChange(start, end); 
       }}
       startDate={startDate}
       endDate={endDate}
