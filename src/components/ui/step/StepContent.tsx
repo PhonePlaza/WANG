@@ -5,7 +5,7 @@ import React from "react";
 import "./StepContent.css";
 
 interface StepFormProps {
-  currentStep: number; // 1 = สร้างทริป, 2 = รอ member join, 3 = Ready for the journey
+  currentStep: number; 
 }
 
 export default function StepForm({ currentStep }: StepFormProps) {
