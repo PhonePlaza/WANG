@@ -16,6 +16,8 @@ export default function HomePage() {
   const [groups, setGroups] = useState<any[]>([])
   const [trips, setTrips] = useState<any[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+
 
   // --- 1️⃣ Fetch groups that current user belongs to
   useEffect(() => {
@@ -29,7 +31,7 @@ export default function HomePage() {
         console.warn('No user found or error:', userError)
         return
       }
-
+      setCurrentUser(user)
       console.log('Current user:', user)
 
       // Step 1: get group_ids where user is a member
@@ -72,8 +74,15 @@ export default function HomePage() {
     const fetchTrips = async () => {
       const { data, error } = await supabase
         .from('trips')
-        .select('*')
+        .select(`*,
+          *,
+          trip_members!inner(
+            status
+          )
+        `)
         .eq('group_id', selectedGroupId)
+        .eq('trip_members.user_id', currentUser.id)
+
 
       if (error) {
         console.error('Error fetching trips:', error)
@@ -114,9 +123,15 @@ export default function HomePage() {
       </div>
       {/* Trip List */}
       <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
-        {trips?.map((trip) => (
-          <TripCard key={trip.trip_id} trip={trip} />
-        ))}
+        {trips.length > 0 ? (
+          trips.map((trip) => (
+            <TripCard key={trip.trip_id} trip={trip} currentUserId={currentUser.id} />
+          ))
+        ) : (
+          <p className="text-gray-500 col-span-full text-center">
+            No trips found for this group.
+          </p>
+        )}
       </div>
     </>
   )
