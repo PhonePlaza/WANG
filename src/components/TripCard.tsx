@@ -1,18 +1,22 @@
+'use client'
+
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation' // App Router navigation
+import { Label } from '@/components/ui/label'
 
 export default function TripCard({ trip, currentUserId }: { trip: any, currentUserId: string }) {
   const supabase = createClient()
+  const router = useRouter()
+
   const initialStatus = trip.trip_members?.[0]?.status ?? 'PENDING'
   const [status, setStatus] = useState(initialStatus)
   const now = new Date()
-  const deadline = new Date(trip.join_deadline) // make sure trip.join_deadline is a Date string
+  const deadline = new Date(trip.join_deadline)
   const isOverDeadline = now > deadline
 
   const handleJoinToggle = async () => {
-    // if (status === 'CANCELLED') return // dead button
-
     const newStatus = status === 'JOINED' ? 'CANCELLED' : 'JOINED'
 
     const { error } = await supabase
@@ -26,14 +30,28 @@ export default function TripCard({ trip, currentUserId }: { trip: any, currentUs
       return
     }
 
-    setStatus(newStatus) // update UI immediately
+    setStatus(newStatus)
+  }
+
+  const handleViewDetail = () => {
+    router.push(`/trip/${trip.trip_id}`)
   }
 
   // determine button variant based on status
   let buttonVariant: 'default' | 'outline' | 'ghost' | 'success' | 'success2' | 'destructive' = 'default'
-  if (status === 'JOINED') buttonVariant = 'success2'
-  if (status === 'CANCELLED') buttonVariant = 'outline'
-  if (status === 'PENDING') buttonVariant = 'outline'
+  let labelVariant: 'bg-green-300' | 'bg-red-300' | 'bg-yellow-300' | 'bg-gray-300' = 'bg-gray-300'
+  if (status === 'JOINED') {
+    labelVariant = 'bg-green-300'
+    buttonVariant = 'destructive'
+  }
+  if (status === 'CANCELLED') {
+    buttonVariant = 'success2'
+    labelVariant = 'bg-red-300'
+  }
+  if (status === 'PENDING') {
+    buttonVariant = 'success2'
+    labelVariant = 'bg-yellow-300'
+  }
 
   return (
     <div className="border rounded-md p-4 shadow-sm flex flex-col gap-3">
@@ -41,18 +59,29 @@ export default function TripCard({ trip, currentUserId }: { trip: any, currentUs
       <p>📍 {trip.location}</p>
       <p>💰 Budget: {trip.budget_per_person}</p>
       <p>📅 {trip.date_range_start} → {trip.date_range_end}</p>
-      <p>🟢 Status: {status}</p>
 
-      <Button
-        variant={buttonVariant}
-        disabled={isOverDeadline}
-        onClick={handleJoinToggle}
-      >
-        {isOverDeadline ? 'Deadline Passed'
-          : status === 'JOINED' ? 'Unjoin'
-          : status === 'CANCELLED' ? 'Join'   
-          : 'Join'}
-      </Button>
+      <p className={`${labelVariant} px-4 py-1 rounded-md w-fit`}>
+         {status}
+      </p>
+
+      <div className="mt-auto flex gap-2">
+        <Button
+          className='flex-1 w-full'
+          variant={buttonVariant}
+          disabled={isOverDeadline}
+          onClick={handleJoinToggle}
+        >
+          {isOverDeadline ? 'Deadline Passed'
+            : status === 'JOINED' ? 'Cancel'
+              : status === 'CANCELLED' ? 'Join'
+                : 'Join'}
+        </Button>
+
+        {/* View Details Button */}
+        <Button  className='flex-1'variant="outline" onClick={handleViewDetail}>
+          View Details
+        </Button>
+        </div>
     </div>
   )
 }
