@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import TripCard from '@/components/TripCard'
+import Link from 'next/link'
 
 export default function HomePage() {
   const supabase = createClient()
@@ -120,7 +121,11 @@ export default function HomePage() {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+      <Button >
+        <Link href="/create-trip">สร้างทริปใหม่</Link>
+      </Button>
       </div>
+      
       {/* Trip List */}
       <div className="grid gap-6 p-6 sm:grid-cols-2 lg:grid-cols-3">
         {trips.length > 0 ? (
