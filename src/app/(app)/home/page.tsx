@@ -122,7 +122,9 @@ export default function HomePage() {
           </DropdownMenuContent>
         </DropdownMenu>
       <Button >
-        <Link href="/create-trip?groupId=${selectedGroupId}">สร้างทริปใหม่</Link>
+        <Link href={`/create-trip?groupId=${selectedGroupId}`}>
+          สร้างทริปใหม่
+        </Link>
       </Button>
       </div>
       
