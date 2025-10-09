@@ -1,28 +1,15 @@
-.step-form {
-  max-width: 500px;
-  margin: 20px auto;
-  text-align: center;
-  font-family: sans-serif;
-}
-
-.step-content {
-  min-height: 100px;
-  margin-bottom: 20px;
-  font-size: 20px;
-}
-
 .step-circles-fixed {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
+  gap: 50px;
   position: relative;
-  margin-bottom: 20px;
-  width: 50%;
+  margin-bottom: 15px;
 }
 
 /* วงกลม */
 .step-circle {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: #eee;
   color: #555;
@@ -30,6 +17,7 @@
   justify-content: center;
   align-items: center;
   font-weight: bold;
+  font-size: 13px;
   position: relative;
   z-index: 1;
 }
@@ -39,34 +27,31 @@
   content: "";
   position: absolute;
   top: 50%;
-  left: 100%;
-  margin-left: 5px;
-  width: 200px;   
-  height: 3px;
+  left: 120%; 
+  height: 2px;
+  width: 50px; 
   background-color: #eee;
   transform: translateY(-50%);
-  z-index: -1;
+  z-index: 0;
 }
 
-/* ไม่ให้วงกลมสุดท้ายมีเส้นต่อ */
+/* วงสุดท้ายไม่มีเส้น */
 .step-circle:last-child::after {
   display: none;
 }
 
-/* วงกลมที่เสร็จแล้ว */
+/* completed & active */
 .step-circle.completed {
-  background-color: #4caf50;
+  background-color: #355dfb;
   color: white;
 }
 
-/* วงกลมที่ active */
-.step-circle.active {
-  border: 3px solid #4caf50;
-  background-color: white;
-  color: #4caf50;
+.step-circle.completed::after {
+  background-color: #355dfb;
 }
 
-/* เส้นเชื่อมของวงที่เสร็จแล้วเป็นเขียว */
-.step-circle.completed::after {
-  background-color: #4caf50;
+.step-circle.active {
+  border: 2px solid #355dfb;
+  background-color: white;
+  color: #355dfb;
 }
