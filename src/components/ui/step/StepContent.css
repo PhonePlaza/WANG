@@ -1,7 +1,7 @@
 .step-circles-fixed {
   display: flex;
-  justify-content: flex-start; /* ให้เริ่มจากซ้าย */
-  gap: 100px; 
+  justify-content: flex-start;
+  gap: 50px;
   position: relative;
   margin-bottom: 15px;
 }
@@ -27,9 +27,9 @@
   content: "";
   position: absolute;
   top: 50%;
-  left: 120%;
+  left: 120%; 
   height: 2px;
-  width: 100px; 
+  width: 50px; 
   background-color: #eee;
   transform: translateY(-50%);
   z-index: 0;
