@@ -314,7 +314,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success"
+                    variant="success3"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("custom")}
@@ -371,7 +371,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success"
+                    variant="success3"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("vote")}
