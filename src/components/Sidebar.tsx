@@ -7,7 +7,7 @@ import { Home, Calendar, Plus, Settings } from 'lucide-react'
 const NAV = [
   { href: '/home', label: 'home', icon: Home },
   { href: '/calendar', label: 'calendar', icon: Calendar },
-  { href: '/group', label: 'join/create group', icon: Plus },
+  { href: '/group', label: 'group', icon: Plus },
   { href: '/settings', label: 'setting', icon: Settings },
 ]
 
