@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, MapPin, Users, CalendarDays, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Users, CalendarDays } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -24,12 +24,13 @@ type OverviewRow = {
   trip_id: number;
   trip_name: string;
   group_id: number;
+  group_name: string;
   date_range_start: string;
   date_range_end: string;
   location: string;
   num_days: number | null;
   budget_per_person: number | null;
-  created_by: string; // Not always present in view, but useful for fallback
+  created_by: string;
   member_count: number | string | null;
 };
 
@@ -46,19 +47,19 @@ type TripRowFallback = {
   location: string;
   num_days: number | null;
   budget_per_person: number | null;
-  created_by: string; // Explicitly included in the fallback query
 };
 
 /** Type definition for the trip data displayed in the component */
 type DisplayTrip = {
   id: number;
   title: string;
+  groupName: string;
   startDate: Date;
   endDate: Date;
   location: string;
   members: number;
   color: string;
-  status: "planning" | "confirmed" | "completed";
+  status: "planning" | "completed";
   budget?: number | null;
   days?: number | null;
 };
@@ -69,7 +70,7 @@ const colorFromId = (id: number) => colorPool[Math.abs(id) % colorPool.length];
 
 /** Helper function to get color based on trip status for borders/backgrounds */
 const getStatusColor = (s: DisplayTrip["status"]) =>
-  s === "confirmed" ? "bg-blue-500" : s === "planning" ? "bg-yellow-500" : "bg-gray-500";
+  s === "planning" ? "bg-yellow-500" : "bg-gray-500";
 
 /**
  * 💡 FIXED UTILITY FUNCTION: Converts nullable values from Supabase (number or string) to a number (0 if null/undefined).
@@ -141,91 +142,116 @@ export default function Calendar() {
   /**
    * ----------------------------------------------------------------------------
    * Function: Fetch Trips
+   * * *** ⬇️ โค้ดที่แก้ไขแล้ว ⬇️ ***
    * ----------------------------------------------------------------------------
    */
   const fetchTrips = async () => {
-  if (!userId) return;
+    if (!userId) return;
 
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    // 1️⃣ ดึง trip_id ที่ user เป็นสมาชิก
-    const { data: userTrips, error: userTripsErr } = await supabase
-      .from("trip_members")
-      .select("trip_id")
-      .eq("user_id", userId);
+      // 1️⃣ ดึง trip_id ที่ user เป็นสมาชิก
+      const { data: userTrips, error: userTripsErr } = await supabase
+        .from("trip_members")
+        .select("trip_id")
+        .eq("user_id", userId);
 
-    if (userTripsErr) throw userTripsErr;
-    if (!userTrips || userTrips.length === 0) {
-      setTrips([]);
+      if (userTripsErr) throw userTripsErr;
+      if (!userTrips || userTrips.length === 0) {
+        setTrips([]);
+        setLoading(false);
+        return;
+      }
+
+      const tripIds = userTrips.map((t) => t.trip_id);
+
+      // 2️⃣ ดึงข้อมูล trip ตาม tripIds
+      const { data, error: tripsErr } = await supabase
+        .from("trips")
+        .select(`
+          trip_id, trip_name, group_id,
+          date_range_start, date_range_end,
+          location, num_days, budget_per_person
+        `)
+        .in("trip_id", tripIds);
+
+      if (tripsErr) throw tripsErr;
+
+      const tripsData: TripRowFallback[] = data || []; 
+
+      if (tripsData.length === 0) {
+        setTrips([]);
+        setLoading(false);
+        return;
+      }
+
+      // 2.5: ดึงชื่อ group จาก group_id ทั้งหมดที่ได้มา
+      const groupIds = [...new Set(tripsData.map(t => t.group_id))];
+      
+      //
+      // ‼️‼️‼️ นี่คือบรรทัดที่แก้ไขแล้ว ‼️‼️‼️
+      //
+      const { data: groupsData, error: groupsErr } = await supabase
+        .from("group") // <-- ‼️ แก้จาก "groups" เป็น "group"
+        .select("group_id, group_name")
+        .in("group_id", groupIds);
+
+      if (groupsErr) throw groupsErr;
+
+      // สร้าง Map (ตัวค้นหา) เพื่อจับคู่ group_id -> group_name
+      const groupNameMap = new Map<number, string>();
+      (groupsData || []).forEach(g => {
+        groupNameMap.set(g.group_id, g.group_name);
+      });
+
+      // 3️⃣ นับจำนวนสมาชิกแต่ละ trip
+      const { data: membersData, error: membersErr } = await supabase
+        .from("trip_members")
+        .select("trip_id")
+        .in("trip_id", tripIds);
+
+      if (membersErr) throw membersErr;
+
+      const memberCounts = new Map<number, number>();
+      (membersData || []).forEach((m: { trip_id: number }) => {
+        memberCounts.set(m.trip_id, (memberCounts.get(m.trip_id) || 0) + 1);
+      });
+
+      // 4️⃣ map tripsData เป็น DisplayTrip
+      const now = new Date();
+      const display: DisplayTrip[] = tripsData.map((t) => {
+        const startDate = new Date(t.date_range_start);
+        const endDate = new Date(t.date_range_end);
+        const status: DisplayTrip["status"] = endDate < now ? "completed" : "planning";
+        return {
+          id: t.trip_id,
+          title: t.trip_name,
+          groupName: groupNameMap.get(t.group_id) || "Unknown Group", 
+          startDate,
+          endDate,
+          location: t.location,
+          members: memberCounts.get(t.trip_id) || 0,
+          color: colorFromId(t.group_id),
+          status,
+          budget: t.budget_per_person ?? null,
+          days: t.num_days ?? null,
+        };
+      }).sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+      setTrips(display);
+    } catch (e) {
+      console.error("Error fetching trips:", e);
+      setError(
+        e && typeof e === "object" && "message" in e
+          ? (e as { message: string }).message
+          : "เกิดข้อผิดพลาดในการดึงข้อมูล"
+      );
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const tripIds = userTrips.map((t) => t.trip_id);
-
-    // 2️⃣ ดึงข้อมูล trip ตาม tripIds
-    const { data, error: tripsErr } = await supabase
-      .from("trips")
-      .select(`
-        trip_id, trip_name, group_id,
-        date_range_start, date_range_end,
-        location, num_days, budget_per_person
-      `)
-      .in("trip_id", tripIds);
-
-    if (tripsErr) throw tripsErr;
-
-    // บอก TypeScript ว่า data เป็น TripRowFallback[]
-    const tripsData = data as TripRowFallback[];
-
-    // 3️⃣ นับจำนวนสมาชิกแต่ละ trip
-    const { data: membersData, error: membersErr } = await supabase
-      .from("trip_members")
-      .select("trip_id")
-      .in("trip_id", tripIds);
-
-    if (membersErr) throw membersErr;
-
-    const memberCounts = new Map<number, number>();
-    (membersData || []).forEach((m: { trip_id: number }) => {
-      memberCounts.set(m.trip_id, (memberCounts.get(m.trip_id) || 0) + 1);
-    });
-
-    // 4️⃣ map tripsData เป็น DisplayTrip
-    const now = new Date();
-    const display: DisplayTrip[] = tripsData.map((t) => {
-      const startDate = new Date(t.date_range_start);
-      const endDate = new Date(t.date_range_end);
-      const status: DisplayTrip["status"] =
-        endDate < now ? "completed" : startDate <= now && endDate >= now ? "confirmed" : "planning";
-      return {
-        id: t.trip_id,
-        title: t.trip_name,
-        startDate,
-        endDate,
-        location: t.location,
-        members: memberCounts.get(t.trip_id) || 0,
-        color: colorFromId(t.group_id),
-        status,
-        budget: t.budget_per_person ?? null,
-        days: t.num_days ?? null,
-      };
-    }).sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
-
-    setTrips(display);
-  } catch (e) {
-    console.error("Error fetching trips:", e);
-    setError(
-      e && typeof e === "object" && "message" in e
-        ? (e as { message: string }).message
-        : "เกิดข้อผิดพลาดในการดึงข้อมูล"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   /**
@@ -271,7 +297,6 @@ export default function Calendar() {
     return d >= start && d <= end;
   };
   const getTripForDate = (date: number) => trips.filter((t) => isDateInTrip(date, t));
-  const handleCreateTripClick = () => router.push("/home");
 
 
   /**
@@ -357,19 +382,13 @@ export default function Calendar() {
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-6xl mx-auto">
           
-          {/* Header & Create Button */}
+          {/* Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Trip Calendar</h1>
-                <p className="text-gray-600 mt-1">Manage and track all your trips</p>
+                <p className="text-gray-600 mt-1">track all your trips</p>
               </div>
-              <button 
-                onClick={handleCreateTripClick} 
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-              >
-                <Plus className="w-4 h-4" /> Create New Trip
-              </button>
             </div>
           </div>
 
@@ -488,10 +507,6 @@ export default function Calendar() {
                     <span className="font-semibold text-lg text-yellow-600">{trips.filter(t=>t.status==='planning').length}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Confirmed</span>
-                    <span className="font-semibold text-lg text-blue-600">{trips.filter(t=>t.status==='confirmed').length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
                     <span className="text-gray-600">Completed</span>
                     <span className="font-semibold text-lg text-gray-600">{trips.filter(t=>t.status==='completed').length}</span>
                   </div>
@@ -513,15 +528,11 @@ export default function Calendar() {
                       .map((trip) => (
                         <div
                           key={trip.id}
-                          // --- UPDATED LOGIC HERE ---
                           className={`p-3 border-l-4 ${
                             trip.status === "planning"
-                                ? "border-l-yellow-500"
-                                : trip.status === "confirmed"
-                                ? "border-l-blue-500"
-                                : "border-l-gray-500"
+                              ? "border-l-yellow-500"
+                              : "border-l-gray-500"
                           } bg-gray-50 rounded-r-lg cursor-pointer hover:bg-gray-100 transition`}
-                          // --- END UPDATED LOGIC ---
                           onClick={() => {
                             setSelectedTrip(trip);
                             setShowTripModal(true);
@@ -529,7 +540,7 @@ export default function Calendar() {
                         >
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-semibold text-gray-900 text-sm truncate">
+                              <p className="font-semibold text-gray-900 text-sm break-words">
                                 {trip.title}
                               </p>
                               <p className="text-xs text-gray-500">{trip.location}</p>
@@ -559,10 +570,6 @@ export default function Calendar() {
                     <span className="text-gray-700">Planning</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    <span className="text-gray-700">Confirmed</span>
-                  </div>
-                  <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-gray-500"></div>
                     <span className="text-gray-700">Completed</span>
                   </div>
@@ -583,6 +590,11 @@ export default function Calendar() {
                       <h3 className="text-xl font-bold text-gray-900">{selectedTrip.title}</h3>
                     </div>
                     <div className="space-y-4 mb-6">
+                      {/* Group Name */}
+                      <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="p-2 bg-purple-100 rounded-full"><Users className="w-4 h-4 text-purple-600" /></div>
+                        <div><p className="text-sm text-gray-500">Group</p><p className="font-medium text-gray-900">{selectedTrip.groupName}</p></div>
+                      </div>
                       {/* Location */}
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                         <div className="p-2 bg-blue-100 rounded-full"><MapPin className="w-4 h-4 text-blue-600" /></div>
@@ -603,7 +615,7 @@ export default function Calendar() {
                       </div>
                       {/* Members */}
                       <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                        <div className="p-2 bg-purple-100 rounded-full"><Users className="w-4 h-4 text-purple-600" /></div>
+                        <div className="p-2 bg-pink-100 rounded-full"><Users className="w-4 h-4 text-pink-600" /></div>
                         <div><p className="text-sm text-gray-500">Members</p><p className="font-medium text-gray-900">{selectedTrip.members} people</p></div>
                       </div>
                       {/* Budget */}
@@ -653,15 +665,11 @@ export default function Calendar() {
                       {selectedDayTrips.map((trip, idx) => (
                         <div
                           key={`day-trip-${trip.id}-${idx}`}
-                          // --- UPDATED LOGIC HERE ---
                           className={`border-l-4 ${
                             trip.status === "planning"
-                                ? "border-l-yellow-500"
-                                : trip.status === "confirmed"
-                                ? "border-l-blue-500"
-                                : "border-l-gray-500"
+                              ? "border-l-yellow-500"
+                              : "border-l-gray-500"
                           } bg-gray-50 p-4 rounded-r cursor-pointer hover:bg-gray-100 transition-colors`}
-                          // --- END UPDATED LOGIC ---
                           onClick={() => { 
                             setShowDayEventsModal(false); 
                             setSelectedTrip(trip); 
