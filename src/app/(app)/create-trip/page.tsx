@@ -92,6 +92,11 @@ export default function CreateTripPage() {
         alert("กรุณาเข้าสู่ระบบก่อนสร้างทริป");
         return;
       }
+      if (!groupId) {
+        alert("กรุณาเลือกกลุ่มก่อนกลับไปหน้า Home");
+        router.push(`/home`);
+        return;
+      }
 
       let newTripId: number | null = null;
 
@@ -314,7 +319,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success"
+                    variant="success3"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("custom")}
@@ -371,7 +376,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success"
+                    variant="success3"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("vote")}
