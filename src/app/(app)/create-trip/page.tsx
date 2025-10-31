@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import StepForm from "@/components/ui/step/StepContent";
@@ -28,17 +28,11 @@ export default function CreateTripPage() {
   const [activeTab, setActiveTab] = useState<"custom" | "vote">("custom");
   const totalSteps = activeTab === "custom" ? 3 : 4;
 
+  const searchParams = useSearchParams();
+  const [groupId, setGroupId] = useState<number | null>(null);
+
   const supabase = createClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [GroupId, setGroupId] = useState<string | null>(null);
-  useEffect(() => {
-    const id = searchParams.get("GroupId");
-    setGroupId(id);
-  }, [searchParams]);
-
-  const groupId = Number(GroupId);
-
   const insertTripMembers = async (newTripId: number, groupId: number) => {
     const { data: members, error: memberError } = await supabase
       .from("group_members")
@@ -76,6 +70,10 @@ export default function CreateTripPage() {
 
     alert("สร้างทริปและเพิ่มสมาชิกเรียบร้อยแล้ว!");
   };
+  React.useEffect(() => {
+    const id = searchParams.get("groupId");
+    if (id) setGroupId(parseInt(id));
+  }, [searchParams]);
 
   const handleCreateTrip = async (type: "custom" | "vote") => {
     try {
@@ -316,7 +314,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success3"
+                    variant="success"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("custom")}
@@ -373,7 +371,7 @@ export default function CreateTripPage() {
                 />
                 <div className="flex justify-center w-full">
                   <Button
-                    variant="success3"
+                    variant="success"
                     size="lg"
                     className="w-100"
                     onClick={() => handleCreateTrip("vote")}
