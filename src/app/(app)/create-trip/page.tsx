@@ -72,8 +72,13 @@ export default function CreateTripPage() {
   };
   React.useEffect(() => {
     const id = searchParams.get("groupId");
-    if (id) setGroupId(parseInt(id));
-  }, [searchParams]);
+    if (id) {
+      setGroupId(parseInt(id));
+    } else {
+      alert("กรุณาเลือกกลุ่มก่อนสร้างทริป");
+      router.push("/home");
+    }
+  }, [searchParams, router]);
 
   const handleCreateTrip = async (type: "custom" | "vote") => {
     try {
@@ -85,11 +90,6 @@ export default function CreateTripPage() {
 
       if (!user) {
         alert("กรุณาเข้าสู่ระบบก่อนสร้างทริป");
-        return;
-      }
-      if (!groupId) {
-        alert("กรุณาเลือกกลุ่มก่อนกลับไปหน้า Home");
-        router.push(`/home`);
         return;
       }
 
