@@ -1,4 +1,5 @@
-// app/api/send-email/route.ts
+// src/app/api/notify/route.ts
+
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
@@ -7,8 +8,8 @@ import { getGroupMemberEmails, sendEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
-    const { groupId, subject, html } = await req.json(); //รับค่า body
-    const gid = Number(groupId); //เก็บ groupId เป็น number
+    const { groupId, subject, html } = await req.json(); // รับค่า body
+    const gid = Number(groupId); // เก็บ groupId เป็น number
 
     if (!gid) {
       return NextResponse.json({ error: 'groupId is required' }, { status: 400 });
