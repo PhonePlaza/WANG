@@ -152,11 +152,12 @@ export default function Calendar() {
       setLoading(true);
       setError(null);
 
-      // 1️⃣ ดึง trip_id ที่ user เป็นสมาชิก
+      // 1️⃣ ดึง trip_id ที่ user เป็นสมาชิก (เฉพาะที่ JOINED)
       const { data: userTrips, error: userTripsErr } = await supabase
         .from("trip_members")
         .select("trip_id")
-        .eq("user_id", userId);
+        .eq("user_id", userId)
+        .eq("status", "JOINED"); // 👈 *** 1. แก้ไขจุดนี้ ***
 
       if (userTripsErr) throw userTripsErr;
       if (!userTrips || userTrips.length === 0) {
@@ -190,9 +191,6 @@ export default function Calendar() {
       // 2.5: ดึงชื่อ group จาก group_id ทั้งหมดที่ได้มา
       const groupIds = [...new Set(tripsData.map(t => t.group_id))];
       
-      //
-      // ‼️‼️‼️ นี่คือบรรทัดที่แก้ไขแล้ว ‼️‼️‼️
-      //
       const { data: groupsData, error: groupsErr } = await supabase
         .from("group") // <-- ‼️ แก้จาก "groups" เป็น "group"
         .select("group_id, group_name")
@@ -206,11 +204,12 @@ export default function Calendar() {
         groupNameMap.set(g.group_id, g.group_name);
       });
 
-      // 3️⃣ นับจำนวนสมาชิกแต่ละ trip
+      // 3️⃣ นับจำนวนสมาชิกแต่ละ trip (เฉพาะที่ JOINED)
       const { data: membersData, error: membersErr } = await supabase
         .from("trip_members")
         .select("trip_id")
-        .in("trip_id", tripIds);
+        .in("trip_id", tripIds)
+        .eq("status", "JOINED"); // 👈 *** 2. แก้ไขจุดนี้ ***
 
       if (membersErr) throw membersErr;
 
