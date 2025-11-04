@@ -243,7 +243,7 @@ export default function CreateTripPage() {
                   setTripEndDate={setTripEndDate}
                 />
                 <div className="flex justify-center w-full">
-                  <Button variant="success" size="lg" className="w-100" onClick={() => handleCreateTrip("custom")}>
+                  <Button variant="success3" size="lg" className="w-100" onClick={() => handleCreateTrip("custom")}>
                     Create Custom Trip
                   </Button>
                 </div>
@@ -268,7 +268,7 @@ export default function CreateTripPage() {
                   setTripEndDate={setTripEndDate}
                 />
                 <div className="flex justify-center w-full">
-                  <Button variant="success" size="lg" className="w-100" onClick={() => handleCreateTrip("vote")}>
+                  <Button variant="success3" size="lg" className="w-100" onClick={() => handleCreateTrip("vote")}>
                     Create Vote Trip
                   </Button>
                 </div>
@@ -401,7 +401,7 @@ const DateRangeDisplay = React.memo(({ tripStartDate, tripEndDate, setTripStartD
             </p>
             <button
               onClick={handleResetCalendar}
-              className="px-4 py-2 text-sm bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition-colors"
+              className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg shadow hover:bg-red-600 transition-colors"
             >
               เลือกใหม่
             </button>
