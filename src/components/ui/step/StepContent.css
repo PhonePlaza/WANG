@@ -42,16 +42,16 @@
 
 /* completed & active */
 .step-circle.completed {
-  background-color: #355dfb;
+  background-color: #4F39F6;
   color: white;
 }
 
 .step-circle.completed::after {
-  background-color: #355dfb;
+  background-color: #4F39F6;
 }
 
 .step-circle.active {
-  border: 2px solid #355dfb;
+  border: 2px solid #4F39F6;
   background-color: white;
-  color: #355dfb;
+  color: #4F39F6;
 }
