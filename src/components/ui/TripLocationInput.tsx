@@ -38,7 +38,7 @@ const TripLocationInput: React.FC<TripLocationInputProps> = ({ locations, setLoc
           onChange={(e) => setInput(e.target.value)}
           className="flex-1 px-3 py-2 border rounded focus:outline-none"
         />
-        <button onClick={handleAdd} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+        <button onClick={handleAdd} className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-blue-600">
           Add
         </button>
       </div>

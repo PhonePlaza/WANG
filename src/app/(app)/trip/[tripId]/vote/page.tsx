@@ -245,7 +245,6 @@ export default function TripVotePage() {
           </div>
 
           <div className="pt-4 border-t border-indigo-200">
-              {/* <StepForm currentStep={1} /> -- ส่วนนี้ถูกลบออกแล้วย้ายไปข้างบน */}
               <p className="mt-2 text-sm font-semibold text-red-600">
                 ⚠️ วันปิดโหวต: {trip.vote_close_date ? formatDate(trip.vote_close_date) : "ยังไม่ระบุ"}
               </p>
