@@ -154,10 +154,11 @@ export async function notifyTripJoined(
 ///* ───────────────── trip join deadline passed ───────────────── */
 type TripMember = { user_id: string; status: string | null; name: string | null }
 
+/** ✅ แจ้งเตือนเมื่อถึงวันปิดรับสมัครของทริป — ส่งเฉพาะคนที่ JOINED */
 export async function notifyTripJoinDeadline(tripId: number) {
   const supabase = await createClient()
 
-  // 1) ดึงข้อมูลทริป
+  // 1) อ่านข้อมูลทริป (ใช้ไว้ใส่หัวเรื่อง/รายละเอียด)
   const { data: trip, error: tErr } = await supabase
     .from('trips')
     .select('trip_name, group_id, join_deadline')
@@ -165,36 +166,21 @@ export async function notifyTripJoinDeadline(tripId: number) {
     .single()
   if (tErr || !trip) return { ok: true, sent: 0 }
 
-  // 2) สมาชิกทุกคนในทริป (ทุกสถานะ) -> รายชื่อผู้รับ
-  const { data: tm, error: tmErr } = await supabase
-    .from('trip_members')
-    .select('user_id, status, name')
-    .eq('trip_id', tripId)
-  if (tmErr || !tm?.length) return { ok: true, sent: 0 }
-
-  const uids = Array.from(new Set(tm.map(r => String(r.user_id))))
-  const { data: profs, error: pErr } = await supabase
-    .from('profiles')
-    .select('id, email, full_name')
-    .in('id', uids)
-  if (pErr || !profs) return { ok: true, sent: 0 }
-
-  // recipients = อีเมลทุกคนในทริป (กันว่าง/ซ้ำ)
+  // 2) ผู้รับ = เฉพาะสมาชิกทริปที่ JOINED แล้ว
+  const joinedMembers = await getTripMemberEmailsByTrip(tripId, { onlyJoined: true })
   const recipients = Array.from(
-    new Set(profs.map(p => String(p.email)).filter(Boolean))
-  )
+    new Set(joinedMembers.map(m => m.email).filter(Boolean))
+  ) as string[]
   if (!recipients.length) return { ok: true, sent: 0 }
 
-  // 3) สร้างสรุปรายชื่อผู้ที่ JOINED
-  const joinedUIDs = tm.filter(r => r.status === 'JOINED').map(r => r.user_id)
-  const joinedSet = new Set(joinedUIDs)
-  const joinedList = profs
-    .filter(p => joinedSet.has(p.id))
-    .map(p => p.full_name || p.email || 'ผู้ใช้ไม่ระบุชื่อ')
+  // 3) ทำรายชื่อแสดงในเมล (ชื่อจริง ถ้าไม่มีใช้อีเมล)
+  const joinedList = joinedMembers
+    .map(m => m.full_name || m.email)
+    .filter(Boolean) as string[]
 
-  const groupLabel = (await getGroupName(trip.group_id)) ?? 'กลุ่มของคุณ'
+  const groupLabel = (await getGroupName(Number(trip.group_id))) ?? 'กลุ่มของคุณ'
   const tripLabel  = (trip.trip_name as string) ?? `Trip #${tripId}`
-  const deadline   = String(trip.join_deadline)
+  const deadline   = String(trip.join_deadline) // 'YYYY-MM-DD'
 
   const subject = `📢 ปิดรับสมัครแล้ว: สรุปผู้เข้าร่วมทริป ${tripLabel}`
   const html = `
@@ -212,6 +198,7 @@ export async function notifyTripJoinDeadline(tripId: number) {
   await sendEmail({ to: recipients, subject, html })
   return { ok: true, sent: recipients.length }
 }
+
 
 /** ✅ แจ้งเตือนเมื่อถึงวันเริ่มทริป (date_range_start) */
 export async function notifyTripStart(tripId: number) {
@@ -260,6 +247,63 @@ export async function notifyTripStart(tripId: number) {
     <p>เตรียมตัวให้พร้อม แล้วเจอกันนะ!</p>
     <hr/>
     <p>เปิดแอปเพื่อดูรายละเอียดและรายชื่อผู้ร่วมทริป</p>
+  `.trim()
+
+  await sendEmail({ to: recipients, subject, html })
+  return { ok: true, sent: recipients.length }
+}
+
+/** ✅ แจ้งเตือนเมื่อปิดโหวตทริปแล้ว */
+export async function notifyVoteClosed(tripId: number) {
+  const supabase = await createClient()
+
+  // อ่านข้อมูลทริป (สำหรับหัวเรื่อง)
+  const { data: trip, error: tErr } = await supabase
+    .from('trips')
+    .select('trip_name, group_id')
+    .eq('trip_id', tripId)
+    .single()
+  if (tErr || !trip) return { ok: true, sent: 0 }
+
+  // ผู้รับ = สมาชิกของ "ทริปนี้" (จะให้เฉพาะ JOINED ก็เปลี่ยน onlyJoined: true)
+  const members = await getTripMemberEmailsByTrip(tripId, { onlyJoined: true })
+  const recipients = Array.from(new Set(members.map(m => m.email).filter(Boolean))) as string[]
+  if (!recipients.length) return { ok: true, sent: 0 }
+
+  // สรุปผลโหวต
+  const { data: votes, error: vErr } = await supabase
+    .from('trip_votes')
+    .select('location_name')
+    .eq('trip_id', tripId)
+
+  let winnerLine = ''
+  if (!vErr && votes?.length) {
+    const tally: Record<string, number> = {}
+    for (const v of votes) {
+      const name = String(v.location_name ?? 'ไม่ระบุ')
+      tally[name] = (tally[name] ?? 0) + 1
+    }
+    const sorted = Object.entries(tally).sort((a, b) => b[1] - a[1])
+    if (sorted.length) {
+      const [name, cnt] = sorted[0]
+      winnerLine = `<p>🏆 สถานที่คะแนนสูงสุด: <b>${name}</b> (${cnt} โหวต)</p>`
+    }
+  }
+
+  // ชื่อกลุ่ม (สำหรับข้อความ)
+  const { data: g, error: gErr } = await supabase
+    .from('group')
+    .select('group_name')
+    .eq('group_id', trip.group_id)
+    .single()
+  const groupLabel = gErr ? 'กลุ่มของคุณ' : (g?.group_name ?? 'กลุ่มของคุณ')
+  const tripLabel  = trip.trip_name ?? `Trip #${tripId}`
+
+  const subject = `📊 ปิดโหวตแล้ว: ${tripLabel}`
+  const html = `
+    <p>ได้ปิดโหวตสำหรับทริป <b>${tripLabel}</b> ในกลุ่ม <b>${groupLabel}</b> แล้ว</p>
+    ${winnerLine}
+    <p>ดูรายละเอียดผลโหวตและยืนยันแผนในแอปได้เลย</p>
   `.trim()
 
   await sendEmail({ to: recipients, subject, html })
