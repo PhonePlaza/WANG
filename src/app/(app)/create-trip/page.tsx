@@ -13,7 +13,22 @@ interface LocationOption {
   id: number;
   name: string;
 }
-
+async function notifyTripCreatedAPI(params: {
+  groupId: number
+  tripName: string
+  dateStart?: string | null
+  dateEnd?: string | null
+}) {
+  try {
+    await fetch('/api/trip/notify-created', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+  } catch (e) {
+    console.warn('notifyTripCreated failed:', e)
+  }
+}
 export default function CreateTripPage() {
   const [tripName, setTripName] = useState("");
   const [tripLocation, setTripLocation] = useState("");
@@ -127,7 +142,16 @@ export default function CreateTripPage() {
         }
 
         await insertTripMembers(tripData.trip_id, groupId);
+        // 🔔 แจ้งเตือนสมาชิกในกลุ่มว่ามีทริปใหม่
+        await notifyTripCreatedAPI({
+          groupId,
+          tripName,
+          dateStart: tripStartDate?.toISOString().split('T')[0] ?? null,
+          dateEnd: tripEndDate?.toISOString().split('T')[0] ?? null,
+        });
+
         router.push(`/trip/${tripData.trip_id}`);
+
 
       } else {
         if (!tripName || tripLocations.length < 2 || !tripStartDate || !tripEndDate || !tripBudget || !tripDuration || !joinCloseDate || !voteCloseDate) {
@@ -187,7 +211,16 @@ export default function CreateTripPage() {
         }
 
         await insertTripMembers(tripData.trip_id, groupId);
+        // 🔔 แจ้งเตือนสมาชิกในกลุ่มว่ามีทริปใหม่
+        await notifyTripCreatedAPI({
+          groupId,
+          tripName,
+          dateStart: tripStartDate?.toISOString().split('T')[0] ?? null,
+          dateEnd: tripEndDate?.toISOString().split('T')[0] ?? null,
+        });
+
         router.push(`/trip/${tripData.trip_id}/vote`);
+
       }
     } catch (err) {
       console.error(err);
