@@ -1,24 +1,57 @@
 /* styles/TripDatePicker.css */
-.react-datepicker-custom {
-  width: 3rem; /* กว้างขึ้น */
-  font-size: 1rem; /* ตัวอักษรใหญ่ */
+.react-datepicker {
+    /* กำหนดความกว้างขั้นต่ำที่ 30rem เพื่อรองรับ 7 วัน x 4rem */
+    min-width: 30rem; 
 }
-
+.react-datepicker-custom {
+  width: 1rem;
+  font-size: 2rem;
+}
 .react-datepicker__header {
+  height: 3rem;
   font-size: 1rem;
+  background-color: #ececec !important;
+  display: flex;          
+  align-items: center;   
+  justify-content: center; 
 }
 .react-datepicker__day-name {
-  width: 5rem;        
-  height: 3rem;       
-  line-height: 3rem;  
-  font-size: 1rem; 
-  text-align: center; 
+  width: 4rem;
+  height: 2rem;
+  line-height: 3rem;
+  font-size: 1rem;
+  text-align: center;
 }
 
 .react-datepicker__day {
-  width: 5rem;        
-  height: 3rem;        
-  line-height: 3rem;   
-  font-size: 1rem;     
+  width: 4rem;
+  height: 2rem;
+  line-height: 2rem;
+  font-size: 1rem;
   text-align: center;
+}
+.react-datepicker__day--in-range {
+  background-color: #dce3fb !important; 
+  color: gray;
+}
+/* วันที่เริ่มต้นของช่วง */
+.react-datepicker__day--range-start {
+  background-color: #355dfb !important;
+  color: #ffffff !important;
+}
+
+/* วันที่สิ้นสุดของช่วง */
+.react-datepicker__day--range-end {
+  background-color: #355dfb !important;
+  color: #ffffff !important;
+}
+
+.react-datepicker__navigation--next {
+  right: 5px;   /* ⭐ ลดระยะห่างจากขอบขวา */
+  top: 10px;    
+}
+
+.react-datepicker__navigation--previous {
+  left: 5px;    /* ⭐ ลดระยะห่างจากขอบซ้าย */
+  top: 10px;
 }
