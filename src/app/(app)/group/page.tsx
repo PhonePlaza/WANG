@@ -96,15 +96,43 @@ export default function GroupPage() {
     await loadMyGroups();
   }
 
+  // ---------- Join โดยใช้ RPC เดิม (คอมเมนต์ไว้) ----------
+  // async function joinGroup() {
+  //   const inputCode = code.trim();
+  //   const { data, error } = await supabase.rpc('fn_join_group', { p_code: inputCode });
+  //   if (error || !data) {
+  //     alert(error?.message ?? 'ไม่พบกลุ่มนี้ กรุณาตรวจสอบรหัส');
+  //     return;
+  //   }
+  //   await loadMyGroups();
+  // }
+
+  /// ---------- Join โดยใช้ API ใหม่ ----------
   async function joinGroup() {
     const inputCode = code.trim();
-    const { data, error } = await supabase.rpc('fn_join_group', { p_code: inputCode });
-    if (error || !data) {
-      alert(error?.message ?? 'ไม่พบกลุ่มนี้ กรุณาตรวจสอบรหัส');
-      return;
+
+    try {
+      const res = await fetch('/api/group/join-by-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: inputCode }), // ส่งโค้ดเข้า API ใหม่
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // ข้อผิดพลาดจากฝั่งเซิร์ฟเวอร์ (เช่น invalid code / join failed)
+        alert(data?.error ?? 'เข้าร่วมกลุ่มไม่สำเร็จ');
+        return;
+      }
+
+      // สำเร็จ: โหลดรายการกลุ่มใหม่ (ให้ UI อัปเดตจำนวนสมาชิก ฯลฯ)
+      await loadMyGroups();
+    } catch (e) {
+      alert('เกิดข้อผิดพลาดในการเข้าร่วมกลุ่ม');
     }
-    await loadMyGroups();
   }
+
 
   // ---------- Handlers ----------
   const openAddMenu = () => { setShowModal(true); setMode('menu'); };
@@ -251,9 +279,8 @@ export default function GroupPage() {
               <button
                 onClick={handleCreate}
                 disabled={!newGroupName.trim()}
-                className={`px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg text-white font-semibold shadow transition ${
-                  newGroupName.trim() ? 'bg-neutral-900 hover:opacity-90' : 'bg-neutral-400 cursor-not-allowed'
-                }`}
+                className={`px-4 sm:px-5 py-2 text-sm sm:text-base rounded-lg text-white font-semibold shadow transition ${newGroupName.trim() ? 'bg-neutral-900 hover:opacity-90' : 'bg-neutral-400 cursor-not-allowed'
+                  }`}
               >
                 สร้างกลุ่ม
               </button>
@@ -293,9 +320,8 @@ export default function GroupPage() {
               <button
                 onClick={handleJoin}
                 disabled={!codeOk}
-                className={`px-5 sm:px-6 py-2 sm:py-3 text-sm sm:text-base rounded-xl text-white font-semibold shadow transition ${
-                  codeOk ? 'bg-neutral-900 hover:opacity-90' : 'bg-neutral-400 cursor-not-allowed'
-                }`}
+                className={`px-5 sm:px-6 py-2 sm:py-3 text-sm sm:text-base rounded-xl text-white font-semibold shadow transition ${codeOk ? 'bg-neutral-900 hover:opacity-90' : 'bg-neutral-400 cursor-not-allowed'
+                  }`}
               >
                 Join Group
               </button>
