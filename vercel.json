@@ -1,16 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/trip/run-deadline-digest",
-      "schedule": "5 17 * * *"
-    },
-    {
-      "path": "/api/trip/run-start-reminder",
+      "path": "/api/trip/run-all",
       "schedule": "10 17 * * *"
-    },
-    {
-      "path": "/api/trip/run-vote-close-digest",
-      "schedule": "15 17 * * *"
     }
   ]
 }
