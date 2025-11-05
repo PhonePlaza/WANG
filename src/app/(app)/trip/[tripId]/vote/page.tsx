@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useParams, useRouter } from "next/navigation";
 import StepForm from "@/components/ui/step/StepContent";
+import { Loader2 } from "lucide-react";
 
 interface Trip {
   trip_id: number;
   trip_name: string;
-  location: string;
+  location: string | null;
   budget_per_person: number;
   num_days: number;
   date_range_start: string;
@@ -28,7 +29,6 @@ interface LocationOption {
   name: string;
 }
 
-// Function formatDate
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
@@ -50,74 +50,126 @@ export default function TripVotePage() {
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [votedLocationName, setVotedLocationName] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const [winningLocationName, setWinningLocationName] = useState<string | null>(null);
 
   const supabase = createClient();
 
+  const updateWinningLocation = async () => {
+    const { data: votes, error: votesError } = await supabase
+      .from("trip_votes")
+      .select("location_id")
+      .eq("trip_id", tripId);
+
+    if (votesError || !votes || votes.length === 0) {
+      setWinningLocationName(null);
+      return;
+    }
+
+    const voteCounts: Record<number, number> = {};
+    votes.forEach((v: { location_id: number }) => {
+      voteCounts[v.location_id] = (voteCounts[v.location_id] || 0) + 1;
+    });
+
+    let maxVotes = 0;
+    let topLocationId: number | null = null;
+    
+    Object.entries(voteCounts).forEach(([locIdStr, count]) => {
+      const locId = Number(locIdStr);
+      if (count > maxVotes) {
+        maxVotes = count;
+        topLocationId = locId;
+      }
+    });
+
+    if (topLocationId === null) return;
+    
+    const { data: locData } = await supabase
+      .from("trip_locations")
+      .select("location_name")
+      .eq("location_id", topLocationId)
+      .single();
+
+    if (locData?.location_name) {
+      const winningName = locData.location_name;
+      setWinningLocationName(winningName);
+      
+      await supabase
+        .from("trips")
+        .update({ location: winningName })
+        .eq("trip_id", tripId);
+        
+      setTrip(prev => (prev ? { ...prev, location: winningName } : null)); 
+    }
+  };
+
   const fetchTrip = async () => { 
     const { data, error } = await supabase
-        .from("trips")
-        .select("*")
-        .eq("trip_id", tripId)
-        .single();
+      .from("trips")
+      .select("*")
+      .eq("trip_id", tripId)
+      .single();
 
     if (error) return console.error("Fetch trip error:", error);
 
     if (data) {
-        setTrip(data as Trip);
-        fetchCreatorName(data.created_by);
-        checkVoteStatus(data.trip_id);
-        checkVoteClose(data as Trip);
+      setTrip(data as Trip);
+      fetchCreatorName(data.created_by);
+      checkVoteStatus(data.trip_id, data.location);
+      checkVoteClose(data as Trip);
+      updateWinningLocation(); // โหลดผู้ชนะล่าสุดเมื่อเข้าหน้า
     }
   };
 
   const fetchCreatorName = async (userId: string) => { 
     const { data, error } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", userId)
-        .single();
+      .from("profiles")
+      .select("full_name")
+      .eq("id", userId)
+      .single();
 
     if (!error && data?.full_name) setCreatorName(data.full_name);
   };
     
   const fetchLocations = async () => { 
     const { data, error } = await supabase
-        .from("trip_locations")
-        .select("location_id, location_name, trip_id")
-        .eq("trip_id", tripId);
+      .from("trip_locations")
+      .select("location_id, location_name, trip_id")
+      .eq("trip_id", tripId);
 
     if (error) return console.error("Fetch locations error:", error);
 
     const mapped: LocationOption[] = (data as TripLocationRow[]).map((item) => ({
-        id: item.location_id,
-        name: item.location_name,
+      id: item.location_id,
+      name: item.location_name,
     }));
     setLocations(mapped);
   };
     
-  const checkVoteStatus = async (trip_id: number) => { 
+  const checkVoteStatus = async (trip_id: number, finalLocation: string | null) => { 
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
+    if (finalLocation) return; 
+
     const { data, error } = await supabase
-        .from("trip_votes")
-        .select("location_id")
-        .eq("trip_id", trip_id)
-        .eq("user_id", userData.user.id)
-        .single();
+      .from("trip_votes")
+      .select("location_id")
+      .eq("trip_id", trip_id)
+      .eq("user_id", userData.user.id)
+      .single();
 
     if (!error && data) {
-        setHasVoted(true);
-        const votedLoc = locations.find((loc) => loc.id === data.location_id);
-        if (votedLoc) setVotedLocationName(votedLoc.name);
-        else {
-            const { data: locData } = await supabase
-                .from("trip_locations")
-                .select("location_name")
-                .eq("location_id", data.location_id)
-                .single();
-            if (locData?.location_name) setVotedLocationName(locData.location_name);
-        }
+      setHasVoted(true);
+      const votedLoc = locations.find((loc) => loc.id === data.location_id);
+      if (votedLoc) setVotedLocationName(votedLoc.name);
+      else {
+        const { data: locData } = await supabase
+          .from("trip_locations")
+          .select("location_name")
+          .eq("location_id", data.location_id)
+          .single();
+        if (locData?.location_name) setVotedLocationName(locData.location_name);
+      }
     }
   };
 
@@ -127,34 +179,10 @@ export default function TripVotePage() {
     const closeDate = new Date(tripData.vote_close_date);
 
     if (now >= closeDate) {
-        const { data: votes } = await supabase.from("trip_votes").select("location_id");
-
-        if (votes && votes.length > 0) {
-            const voteCounts: Record<number, number> = {};
-            votes.forEach((v: { location_id: number }) => {
-                voteCounts[v.location_id] = (voteCounts[v.location_id] || 0) + 1;
-            });
-
-            const maxVotes = Math.max(...Object.values(voteCounts));
-            const topLocationId = Number(
-                Object.keys(voteCounts).find((key) => voteCounts[Number(key)] === maxVotes)
-            );
-
-            const { data: locData } = await supabase
-                .from("trip_locations")
-                .select("location_name")
-                .eq("location_id", topLocationId)
-                .single();
-
-            if (locData?.location_name) {
-                await supabase
-                    .from("trips")
-                    .update({ location: locData.location_name })
-                    .eq("trip_id", tripData.trip_id);
-            }
-        }
-
-        router.push(`/trip/${tripData.trip_id}`);
+      if (!tripData.location) {
+        await updateWinningLocation(); 
+      }
+      router.push(`/trip/${tripData.trip_id}`);
     }
   };
 
@@ -164,21 +192,42 @@ export default function TripVotePage() {
     if (!userData.user) return;
 
     setLoading(true);
-    const { error } = await supabase.from("trip_votes").insert({
-        trip_id: tripId,
-        user_id: userData.user.id,
-        location_id: selectedLocation,
-    });
+    
+    // Check if already voted (for UPSERT behavior simulation)
+    const { data: existingVote } = await supabase
+        .from("trip_votes")
+        .select("vote_id")
+        .eq("trip_id", tripId)
+        .eq("user_id", userData.user.id)
+        .single();
+
+    let error;
+    if (existingVote) {
+        // Update existing vote
+        ({ error } = await supabase.from("trip_votes")
+            .update({ location_id: selectedLocation })
+            .eq("vote_id", existingVote.vote_id));
+    } else {
+        // Insert new vote
+        ({ error } = await supabase.from("trip_votes").insert({
+            trip_id: tripId,
+            user_id: userData.user.id,
+            location_id: selectedLocation,
+        }));
+    }
+    
     setLoading(false);
 
     if (!error) {
-        const votedName = locations.find((loc) => loc.id === selectedLocation)?.name || "";
-        setHasVoted(true);
-        setVotedLocationName(votedName);
-        alert("โหวตเรียบร้อยแล้ว!");
+      await updateWinningLocation(); 
+
+      const votedName = locations.find((loc) => loc.id === selectedLocation)?.name || "";
+      setHasVoted(true);
+      setVotedLocationName(votedName);
+      alert("โหวตเรียบร้อยแล้ว!");
     } else {
-        console.error("Vote error:", error);
-        alert("เกิดข้อผิดพลาดในการโหวต");
+      console.error("Vote error:", error);
+      alert("เกิดข้อผิดพลาดในการโหวต");
     }
   };
 
@@ -190,18 +239,20 @@ export default function TripVotePage() {
     
   useEffect(() => {
     if (trip && locations.length > 0) {
-      checkVoteStatus(trip.trip_id);
+      checkVoteStatus(trip.trip_id, trip.location);
     }
   }, [trip, locations]);
 
   if (!trip)
-    return <p className="text-center mt-20 text-gray-500 font-medium text-lg">กำลังโหลดข้อมูลทริป...</p>;
+    return (
+        <p className="text-center mt-20 text-gray-500 font-medium text-lg flex items-center justify-center">
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> กำลังโหลดข้อมูลทริป...
+        </p>
+    );
 
   return (
-    // Container หลัก
     <div className="p-4 md:p-8 max-w-6xl mx-auto mt-8 space-y-8 bg-white shadow-2xl rounded-3xl border border-gray-100">
       
-      {/* Header/Title Section - แก้ไขเพื่อเอา User Profile ออกและใส่ StepForm แทน */}
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-inner border-b-2 border-indigo-100">
         <div className="flex flex-col">
           <h1 className="text-2xl font-bold tracking-wide text-gray-800">
@@ -210,16 +261,13 @@ export default function TripVotePage() {
           <p className="text-gray-500 mt-1 text-sm">จัดการและโหวตสถานที่ท่องเที่ยวของคุณ</p>
         </div>
         
-        {/* ตำแหน่งที่วงกลมสีแดงถูกลบออก และย้าย StepForm ขึ้นมาแทน */}
         <div className="mt-4 md:mt-0">
-            <StepForm currentStep={2} totalSteps={4}/>
+          <StepForm currentStep={2} totalSteps={4}/>
         </div>
       </div>
 
-      {/* Main Content Layout (Grid) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* Trip Detail Card - ลบ StepForm ที่อยู่ภายใน Card นี้ออก */}
         <div className="lg:col-span-2 bg-indigo-50 p-8 rounded-2xl shadow-lg border border-indigo-200 space-y-5">
           <h2 className="text-2xl font-extrabold text-indigo-800 border-b-2 border-indigo-300 pb-3 mb-4">
             🗺️ รายละเอียดทริป
@@ -243,15 +291,14 @@ export default function TripVotePage() {
                 <p className="font-semibold text-lg">{formatDate(trip.date_range_start)} - {formatDate(trip.date_range_end)}</p>
             </div>
           </div>
-
+          
           <div className="pt-4 border-t border-indigo-200">
-              <p className="mt-2 text-sm font-semibold text-red-600">
+            <p className="mt-2 text-sm font-semibold text-red-600">
                 ⚠️ วันปิดโหวต: {trip.vote_close_date ? formatDate(trip.vote_close_date) : "ยังไม่ระบุ"}
-              </p>
+            </p>
           </div>
         </div>
 
-        {/* Voting Card */}
         <div className="lg:col-span-1 bg-white p-6 rounded-2xl shadow-xl border border-gray-100 space-y-5">
           {hasVoted ? (
             <div className="text-center font-medium space-y-4">
@@ -294,7 +341,7 @@ export default function TripVotePage() {
                 disabled={loading || selectedLocation === null}
                 className="mt-6 w-full py-3 bg-indigo-600 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed tracking-wide"
               >
-                {loading ? "กำลังบันทึก..." : "ยืนยันการโหวต"}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin mx-auto" /> : "ยืนยันการโหวต"}
               </button>
             </>
           )}
