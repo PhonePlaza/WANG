@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import TripDateRangePicker from "@/components/ui/TripDate-Picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TripLocationInput from "@/components/ui/TripLocationInput";
+import { Loader2 } from "lucide-react"; 
 
 // ⛑ กัน Next พยายาม prerender เพจนี้ (ช่วยลด error ตอนเก็บ page data)
 export const dynamic = "force-dynamic";
@@ -15,6 +16,10 @@ export const dynamic = "force-dynamic";
 interface LocationOption {
   id: number;
   name: string;
+}
+function formatLocalDate(date: Date) {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().split("T")[0];
 }
 
 async function notifyTripCreatedAPI(params: {
@@ -46,16 +51,15 @@ function CreateTripInner() {
   const [tripLocations, setTripLocations] = useState<LocationOption[]>([]);
   const [activeTab, setActiveTab] = useState<"custom" | "vote">("custom");
   const [groupId, setGroupId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false); 
   const totalSteps = activeTab === "custom" ? 3 : 4;
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const id = searchParams.get("groupId");
-    if (id) setGroupId(parseInt(id));
+    const id = searchParams.get("groupId");
+    if (id) setGroupId(parseInt(id));
   }, [searchParams]);
 
   const insertTripMembers = useCallback(
@@ -97,7 +101,7 @@ function CreateTripInner() {
   );
 
   const handleCreateTrip = async (type: "custom" | "vote") => {
-    setIsLoading(true);
+    setIsLoading(true); // 👈 เริ่ม Loading
     try {
       const budgetNumber = parseInt(tripBudget);
       const durationNumber = parseInt(tripDuration);
@@ -133,7 +137,11 @@ function CreateTripInner() {
           return;
         }
 
-        if (joinCloseDate && tripStartDate && new Date(joinCloseDate) >= tripStartDate) {
+        if (
+          joinCloseDate &&
+          tripStartDate &&
+          new Date(joinCloseDate) >= tripStartDate
+        ) {
           alert("กรุณาเลือกวันที่ปิดการเข้าร่วมก่อนวันเริ่มทริป");
           setIsLoading(false);
           return;
@@ -148,8 +156,8 @@ function CreateTripInner() {
               budget_per_person: budgetNumber,
               num_days: durationNumber,
               join_deadline: joinCloseDate,
-              date_range_start: tripStartDate.toISOString().split("T")[0],
-              date_range_end: tripEndDate.toISOString().split("T")[0],
+              date_range_start: formatLocalDate(tripStartDate),
+              date_range_end: formatLocalDate(tripEndDate),
               created_by: user.id,
               group_id: groupId,
               vote_close_date: null,
@@ -166,13 +174,6 @@ function CreateTripInner() {
         }
 
         await insertTripMembers(tripData.trip_id, groupId);
-        await notifyTripCreatedAPI({
-          groupId,
-          tripName,
-          dateStart: tripStartDate?.toISOString().split("T")[0] ?? null,
-          dateEnd: tripEndDate?.toISOString().split("T")[0] ?? null,
-        });
-
         router.push(`/trip/${tripData.trip_id}`);
       } else {
         if (
@@ -194,7 +195,11 @@ function CreateTripInner() {
           return;
         }
 
-        if (joinCloseDate && tripStartDate && new Date(joinCloseDate) >= tripStartDate) {
+        if (
+          joinCloseDate &&
+          tripStartDate &&
+          new Date(joinCloseDate) >= tripStartDate
+        ) {
           alert("วันที่ปิดการเข้าร่วมต้องน้อยกว่าวันเริ่มของทริป");
           setIsLoading(false);
           return;
@@ -219,8 +224,8 @@ function CreateTripInner() {
               budget_per_person: budgetNumber,
               num_days: durationNumber,
               join_deadline: joinCloseDate,
-              date_range_start: tripStartDate.toISOString().split("T")[0],
-              date_range_end: tripEndDate.toISOString().split("T")[0],
+              date_range_start: formatLocalDate(tripStartDate),
+              date_range_end: formatLocalDate(tripEndDate),
               created_by: user.id,
               group_id: groupId,
               vote_close_date: voteCloseDate,
@@ -266,7 +271,7 @@ function CreateTripInner() {
       console.error(err);
       alert("เกิดข้อผิดพลาดในการสร้างทริป");
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // 👈 สิ้นสุด Loading
     }
   };
 
@@ -306,11 +311,33 @@ function CreateTripInner() {
           <div className="max-w-xl w-full mt-5">
             <TabsContent value="custom">
               <div className="mt-6 flex flex-col w-full gap-6 p-6 bg-white rounded-xl shadow-inner border border-gray-100">
-                <InputField label="ชื่อทริป" value={tripName} onChange={(e) => setTripName(e.target.value)} placeholder="ชื่อทริป" />
-                <InputField label="สถานที่" value={tripLocation} onChange={(e) => setTripLocation(e.target.value)} placeholder="สถานที่ท่องเที่ยว" />
-                <BudgetInput label="งบต่อคน" value={tripBudget} onChange={(e) => setTripBudget(e.target.value)} />
-                <DurationInput label="จำนวนวัน" value={tripDuration} onChange={(e) => setTripDuration(e.target.value)} />
-                <DateInput label="วันที่ปิดการเข้าร่วม" value={joinCloseDate} onChange={(e) => setJoinCloseDate(e.target.value)} />
+                <InputField
+                  label="ชื่อทริป"
+                  value={tripName}
+                  onChange={(e) => setTripName(e.target.value)}
+                  placeholder="ชื่อทริป"
+                />
+                <InputField
+                  label="สถานที่"
+                  value={tripLocation}
+                  onChange={(e) => setTripLocation(e.target.value)}
+                  placeholder="สถานที่ท่องเที่ยว"
+                />
+                <BudgetInput
+                  label="งบต่อคน"
+                  value={tripBudget}
+                  onChange={(e) => setTripBudget(e.target.value)}
+                />
+                <DurationInput
+                  label="จำนวนวัน"
+                  value={tripDuration}
+                  onChange={(e) => setTripDuration(e.target.value)}
+                />
+                <DateInput
+                  label="วันที่ปิดการเข้าร่วม"
+                  value={joinCloseDate}
+                  onChange={(e) => setJoinCloseDate(e.target.value)}
+                />
                 <DateRangeDisplay
                   tripStartDate={tripStartDate}
                   tripEndDate={tripEndDate}
@@ -318,8 +345,21 @@ function CreateTripInner() {
                   setTripEndDate={setTripEndDate}
                 />
                 <div className="flex justify-center w-full">
-                  <Button variant="success3" size="lg" className="w-100" onClick={() => handleCreateTrip("custom")}>
-                    Create Custom Trip
+                  <Button
+                    variant="success3"
+                    size="lg"
+                    className="w-100"
+                    onClick={() => handleCreateTrip("custom")}
+                    disabled={isLoading} 
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        กำลังสร้างทริป...
+                      </>
+                    ) : (
+                      "Create Custom Trip"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -327,15 +367,41 @@ function CreateTripInner() {
 
             <TabsContent value="vote">
               <div className="flex flex-col gap-5 p-6 bg-white rounded-xl shadow-inner border border-gray-100">
-                <InputField label="ชื่อทริป" value={tripName} onChange={(e) => setTripName(e.target.value)} placeholder="ชื่อทริป" />
+                <InputField
+                  label="ชื่อทริป"
+                  value={tripName}
+                  onChange={(e) => setTripName(e.target.value)}
+                  placeholder="ชื่อทริป"
+                />
                 <div className="pt-2">
-                  <p className="text-base font-medium text-gray-700 mb-2">สถานที่ (สำหรับโหวต):</p>
-                  <TripLocationInput locations={tripLocations} setLocations={setTripLocations} />
+                  <p className="text-base font-medium text-gray-700 mb-2">
+                    สถานที่ (สำหรับโหวต):
+                  </p>
+                  <TripLocationInput
+                    locations={tripLocations}
+                    setLocations={setTripLocations}
+                  />
                 </div>
-                <BudgetInput label="งบต่อคน" value={tripBudget} onChange={(e) => setTripBudget(e.target.value)} />
-                <DurationInput label="จำนวนวัน" value={tripDuration} onChange={(e) => setTripDuration(e.target.value)} />
-                <DateInput label="วันที่ปิดการโหวต" value={voteCloseDate} onChange={(e) => setVoteCloseDate(e.target.value)} />
-                <DateInput label="วันที่ปิดการเข้าร่วม" value={joinCloseDate} onChange={(e) => setJoinCloseDate(e.target.value)} />
+                <BudgetInput
+                  label="งบต่อคน"
+                  value={tripBudget}
+                  onChange={(e) => setTripBudget(e.target.value)}
+                />
+                <DurationInput
+                  label="จำนวนวัน"
+                  value={tripDuration}
+                  onChange={(e) => setTripDuration(e.target.value)}
+                />
+                <DateInput
+                  label="วันที่ปิดการโหวต"
+                  value={voteCloseDate}
+                  onChange={(e) => setVoteCloseDate(e.target.value)}
+                />
+                <DateInput
+                  label="วันที่ปิดการเข้าร่วม"
+                  value={joinCloseDate}
+                  onChange={(e) => setJoinCloseDate(e.target.value)}
+                />
                 <DateRangeDisplay
                   tripStartDate={tripStartDate}
                   tripEndDate={tripEndDate}
@@ -343,8 +409,21 @@ function CreateTripInner() {
                   setTripEndDate={setTripEndDate}
                 />
                 <div className="flex justify-center w-full">
-                  <Button variant="success3" size="lg" className="w-100" onClick={() => handleCreateTrip("vote")}>
-                    Create Vote Trip
+                  <Button
+                    variant="success3"
+                    size="lg"
+                    className="w-100"
+                    onClick={() => handleCreateTrip("vote")}
+                    disabled={isLoading} 
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        กำลังสร้างทริป...
+                      </>
+                    ) : (
+                      "Create Vote Trip"
+                    )}
                   </Button>
                 </div>
               </div>
@@ -355,16 +434,6 @@ function CreateTripInner() {
     </main>
   );
 }
-
-export default function CreateTripPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <CreateTripInner />
-    </Suspense>
-  );
-}
-
-/* --------------- Reusable inputs (คงของเดิม) --------------- */
 
 const InputField = React.memo(
   ({
@@ -379,7 +448,9 @@ const InputField = React.memo(
     placeholder: string;
   }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-      <label className="text-base font-medium text-gray-700 w-32 shrink-0">{label}:</label>
+      <label className="text-base font-medium text-gray-700 w-32 shrink-0">
+        {label}:
+      </label>
       <input
         type="text"
         placeholder={placeholder}
@@ -403,7 +474,9 @@ const DateInput = React.memo(
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-      <label className="text-base font-medium text-gray-700 w-32 shrink-0">{label}:</label>
+      <label className="text-base font-medium text-gray-700 w-32 shrink-0">
+        {label}:
+      </label>
       <input
         type="date"
         value={value}
@@ -426,7 +499,9 @@ const BudgetInput = React.memo(
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-      <label className="text-base font-medium text-gray-700 w-32 shrink-0">{label}:</label>
+      <label className="text-base font-medium text-gray-700 w-32 shrink-0">
+        {label}:
+      </label>
       <div className="flex items-center w-full border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition-shadow">
         <input
           type="text"
@@ -455,7 +530,9 @@ const DurationInput = React.memo(
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 w-full">
-      <label className="text-base font-medium text-gray-700 w-32 shrink-0">{label}:</label>
+      <label className="text-base font-medium text-gray-700 w-32 shrink-0">
+        {label}:
+      </label>
       <div className="flex items-center w-full border border-gray-300 rounded-lg shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 transition-shadow">
         <input
           type="text"
@@ -489,7 +566,8 @@ const DateRangeDisplay = React.memo(
     const duration =
       tripStartDate && tripEndDate
         ? Math.floor(
-            (tripEndDate.getTime() - tripStartDate.getTime()) / (1000 * 60 * 60 * 24)
+            (tripEndDate.getTime() - tripStartDate.getTime()) /
+              (1000 * 60 * 60 * 24)
           ) + 1
         : 0;
 
@@ -501,14 +579,17 @@ const DateRangeDisplay = React.memo(
 
     return (
       <div className="w-full flex flex-col items-center sm:items-start pt-4 border-t border-gray-100">
-        <p className="text-base font-medium text-gray-700 mb-3">เลือกช่วงวันที่:</p>
+        <p className="text-base font-medium text-gray-700 mb-3">
+          เลือกช่วงวันที่:
+        </p>
         <div className="flex flex-col w-full items-center">
           <div className="origin-top">
             <TripDateRangePicker
               key={pickerKey}
               tripStartDate={tripStartDate || new Date()}
               tripEndDate={
-                tripEndDate || new Date(new Date().setDate(new Date().getDate() + 360))
+                tripEndDate ||
+                new Date(new Date().setDate(new Date().getDate() + 360))
               }
               onChange={(start, end) => {
                 setTripStartDate(start);
@@ -519,11 +600,15 @@ const DateRangeDisplay = React.memo(
           {tripStartDate && tripEndDate && (
             <div className="flex flex-col items-center mt-3">
               <p className="text-gray-700 text-center text-base mb-3">
-                <strong className="font-semibold text-indigo-700">คุณเลือกวันที่:</strong>{" "}
+                <strong className="font-semibold text-indigo-700">
+                  คุณเลือกวันที่:
+                </strong>{" "}
                 {tripStartDate.toLocaleDateString("th-TH")} -{" "}
                 {tripEndDate.toLocaleDateString("th-TH")}
                 <br />
-                <strong className="font-semibold text-indigo-700">จำนวนวันที่เลือก:</strong>{" "}
+                <strong className="font-semibold text-indigo-700">
+                  จำนวนวันที่เลือก:
+                </strong>{" "}
                 {duration} วัน
               </p>
               <button
