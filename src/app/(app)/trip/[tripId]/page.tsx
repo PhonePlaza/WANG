@@ -86,10 +86,10 @@ export default function TripPage() {
       setTrip(tripData as TripData);
 
       if (tripData.vote_close_date) {
-        
+
         setStepInfo({ currentStep: 3, totalSteps: 4 });
       } else {
-        
+
         setStepInfo({ currentStep: 2, totalSteps: 3 });
       }
 
@@ -225,6 +225,17 @@ export default function TripPage() {
     setSavedEnd(selectedEnd);
     setMemberStatus("JOINED");
     alert("✅ อัปเดตสถานะเป็น Join เรียบร้อย");
+
+    // 🔔 แจ้งเตือนสมาชิกในทริปว่ามีคนเข้าร่วมใหม่
+    try {
+      await fetch('/api/trip/member-joined', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tripId: trip.trip_id }),
+      })
+    } catch (e) {
+      console.error('notifyTripJoined failed:', e)
+    }
   };
 
   const handleNotJoin = async () => {
@@ -275,11 +286,10 @@ export default function TripPage() {
       <div className="flex gap-4 justify-center">
         <Button
           variant={isJoined ? "default" : "outline"}
-          className={`w-40 h-10 rounded-lg font-semibold ${
-            isJoined
+          className={`w-40 h-10 rounded-lg font-semibold ${isJoined
               ? "bg-green-600 hover:bg-green-700 text-white border-green-600"
               : "bg-indigo-600 hover:bg-indigo-700 text-white"
-          }`}
+            }`}
           onClick={handleJoin}
         >
           {isJoined ? "Update Dates" : "Join Trip"}
@@ -287,11 +297,10 @@ export default function TripPage() {
 
         <Button
           variant={isCancelled ? "default" : "outline"}
-          className={`w-40 h-10 rounded-lg font-semibold ${
-            isCancelled
+          className={`w-40 h-10 rounded-lg font-semibold ${isCancelled
               ? "bg-red-600 hover:bg-red-700 text-white border-red-600"
               : "border border-gray-400 text-gray-700 hover:bg-gray-100"
-          }`}
+            }`}
           onClick={handleNotJoin}
           disabled={isCancelled}
         >
@@ -360,13 +369,12 @@ export default function TripPage() {
 
         <div className="flex flex-col w-full md:w-1/2">
           <div
-            className={`text-center p-2 font-bold rounded-lg ${
-              memberStatus === "JOINED"
+            className={`text-center p-2 font-bold rounded-lg ${memberStatus === "JOINED"
                 ? "bg-green-100 text-green-700 border border-green-300"
                 : memberStatus === "CANCELLED"
-                ? "bg-red-100 text-red-700 border border-red-300"
-                : "bg-yellow-100 text-yellow-700 border border-yellow-300"
-            }`}
+                  ? "bg-red-100 text-red-700 border border-red-300"
+                  : "bg-yellow-100 text-yellow-700 border border-yellow-300"
+              }`}
           >
             {memberStatus === "JOINED" && "✅ สถานะปัจจุบัน: เข้าร่วม"}
             {memberStatus === "CANCELLED" && "❌ สถานะปัจจุบัน: ไม่เข้าร่วม"}

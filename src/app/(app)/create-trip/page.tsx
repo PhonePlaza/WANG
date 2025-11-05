@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import StepForm from "@/components/ui/step/StepContent";
@@ -9,6 +9,9 @@ import TripDateRangePicker from "@/components/ui/TripDate-Picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TripLocationInput from "@/components/ui/TripLocationInput";
 import { Loader2 } from "lucide-react"; 
+
+// ⛑ กัน Next พยายาม prerender เพจนี้ (ช่วยลด error ตอนเก็บ page data)
+export const dynamic = "force-dynamic";
 
 interface LocationOption {
   id: number;
@@ -19,7 +22,24 @@ function formatLocalDate(date: Date) {
   return local.toISOString().split("T")[0];
 }
 
-export default function CreateTripPage() {
+async function notifyTripCreatedAPI(params: {
+  groupId: number;
+  tripName: string;
+  dateStart?: string | null;
+  dateEnd?: string | null;
+}) {
+  try {
+    await fetch("/api/trip/notify-created", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+  } catch (e) {
+    console.warn("notifyTripCreated failed:", e);
+  }
+}
+
+function CreateTripInner() {
   const [tripName, setTripName] = useState("");
   const [tripLocation, setTripLocation] = useState("");
   const [tripBudget, setTripBudget] = useState("");
@@ -238,6 +258,13 @@ export default function CreateTripPage() {
         }
 
         await insertTripMembers(tripData.trip_id, groupId);
+        await notifyTripCreatedAPI({
+          groupId,
+          tripName,
+          dateStart: tripStartDate?.toISOString().split("T")[0] ?? null,
+          dateEnd: tripEndDate?.toISOString().split("T")[0] ?? null,
+        });
+
         router.push(`/trip/${tripData.trip_id}/vote`);
       }
     } catch (err) {
@@ -252,12 +279,8 @@ export default function CreateTripPage() {
     <main className="p-4 md:p-8 max-w-4xl mx-auto mt-8 space-y-8 bg-white shadow-2xl rounded-3xl border border-gray-100">
       <div className="flex flex-col md:flex-row justify-between items-center bg-white p-4 rounded-xl border-b-2 border-indigo-100">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-bold tracking-wide text-gray-800">
-            ➕ Create New Trip
-          </h1>
-          <p className="text-gray-500 mt-1 text-sm">
-            กำหนดรายละเอียดทริปใหม่ของคุณ
-          </p>
+          <h1 className="text-2xl font-bold tracking-wide text-gray-800">➕ Create New Trip</h1>
+          <p className="text-gray-500 mt-1 text-sm">กำหนดรายละเอียดทริปใหม่ของคุณ</p>
         </div>
         <div className="mt-4 md:mt-0">
           <StepForm currentStep={1} totalSteps={totalSteps} />
