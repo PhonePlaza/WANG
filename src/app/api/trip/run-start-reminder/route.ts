@@ -5,33 +5,34 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyTripStart } from '@/lib/notifications'
 
-// แปลงวันที่เป็น 'YYYY-MM-DD' (โซนเวลาไทยถ้าจำเป็น)
-function toDateStr(d: Date) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+/** คืน YYYY-MM-DD ตามโซนเวลาไทย */
+function todayYMD_AsiaBangkok() {
+  const d = new Date()
+  const parts = new Intl.DateTimeFormat('th-TH', {
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(d)
+  const y = parts.find(p => p.type === 'year')!.value
+  const m = parts.find(p => p.type === 'month')!.value
+  const dd = parts.find(p => p.type === 'day')!.value
+  return `${y}-${m}-${dd}`
 }
 
 export async function POST(req: Request) {
   const supabase = await createClient()
 
-  // (ทางเลือก) ป้องกันด้วย secret header
-  // const key = req.headers.get('x-cron-key')
-  // if (key !== process.env.CRON_KEY) {
-  //   return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  // }
-
+  // อนุญาต override วันที่ตอนเทสต์: { "date": "YYYY-MM-DD" }
   const body = await req.json().catch(() => ({}))
-  // อนุญาตให้ override วัน เพื่อทดสอบง่าย ๆ
-  const today = body?.date || toDateStr(new Date())
+  const targetDate = String(body?.date || todayYMD_AsiaBangkok())
 
-  // หา trips ที่เริ่มวันนี้และยังไม่เคยแจ้งเตือน
+  // หา trips ที่เริ่มวันนี้ และยังไม่แจ้ง (รองรับค่า null)
   const { data: trips, error } = await supabase
     .from('trips')
     .select('trip_id')
-    .eq('date_range_start', today)
-    .eq('trip_start_notified', false)
+    .eq('date_range_start', targetDate)
+    .or('trip_start_notified.is.null,trip_start_notified.eq.false')
 
   if (error) {
     console.error('run-start-reminder query error:', error)
@@ -56,9 +57,13 @@ export async function POST(req: Request) {
       .from('trips')
       .update({ trip_start_notified: true })
       .in('trip_id', processedIds)
-
     if (updErr) console.error('update trip_start_notified failed:', updErr)
   }
 
   return NextResponse.json({ ok: true, scanned: (trips || []).length, sent: sentTotal })
+}
+
+/** ให้ cron/health-call ยิงเป็น GET ได้ด้วย (proxy ไป POST) */
+export async function GET(req: Request) {
+  return POST(req)
 }
