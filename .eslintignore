@@ -1,13 +1,7 @@
-# ทำให้ build ผ่านก่อน (แบบกว้าง)
-
-# ไฟล์ที่ ESLint อ่านไม่ได้
+# กันไฟล์ที่ ESLint อ่านไม่ได้ (ทำให้ "Parsing error: File appears to be binary")
 src/lib/database.types.ts
 
-# ตัดทุกไฟล์ API (เฉพาะตอนรีบ deploy)
+# กันไฟล์ API/เพจ/คอมโพเนนต์ที่มี error เยอะก่อน (ชั่วคราวเพื่อให้ deploy ผ่าน)
 src/app/api/**
-
-# ตัดทุกเพจทั้งหมดใน app (page.tsx)
 src/app/**/page.tsx
-
-# ตัดคอมโพเนนต์ทั้งหมดชั่วคราว
 src/components/**
