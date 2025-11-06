@@ -175,8 +175,8 @@ function CreateTripInner() {
                 await notifyTripCreatedAPI({
                     groupId,
                     tripName,
-                    dateStart: tripStartDate?.toISOString().split("T")[0] ?? null,
-                    dateEnd: tripEndDate?.toISOString().split("T")[0] ?? null,
+                    dateStart: tripStartDate ? formatLocalDate(tripStartDate) : null,
+                    dateEnd:   tripEndDate   ? formatLocalDate(tripEndDate)   : null,
                 });
                 router.push(`/trip/${tripData.trip_id}`);
             } else {
@@ -265,8 +265,8 @@ function CreateTripInner() {
                 await notifyTripCreatedAPI({
                     groupId,
                     tripName,
-                    dateStart: tripStartDate?.toISOString().split("T")[0] ?? null,
-                    dateEnd: tripEndDate?.toISOString().split("T")[0] ?? null,
+                    dateStart: tripStartDate ? formatLocalDate(tripStartDate) : null,
+                    dateEnd:   tripEndDate   ? formatLocalDate(tripEndDate)   : null,
                 });
 
                 router.push(`/trip/${tripData.trip_id}/vote`);
