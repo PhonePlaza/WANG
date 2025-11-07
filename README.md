@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+🌏 WANG — Group Trip Planning Web Application
 
-## Getting Started
+WANG is a web application for collaborative trip planning, designed to make organizing group trips easier and more fun 🎒✈️
+Users can create groups, propose and vote for trip locations, set budgets, check availability, and receive email notifications for important events.
 
-First, run the development server:
+Built with Next.js 14, Supabase, Brevo (Sendinblue), and deployed on Vercel.
 
-```bash
+🚀 Tech Stack
+Category            - Technology
+Frontend / Backend	- Next.js 14 (App Router)
+Database & Auth	    - Supabase
+Email Notification	- Brevo (Sendinblue)
+Deployment	        - Vercel
+Language	        - TypeScript
+Styling	            - Tailwind CSS
+
+🧩 Main Features ---------------
+✅ Google Sign-In Authentication
+👥 Create and Join Groups
+🗓️ Plan Trips with Shared Calendar
+📍 Propose & Vote for Locations
+💰 Set Minimum Budget per Person
+📧 Email Notifications for:
+    - New trip created
+    - New member joined
+    - Trip deadline approaching
+    - Trip start reminder
+
+⚙️ Getting Started
+1. Clone the Repository
+git clone https://github.com/<your-username>/wang.git
+cd wang
+
+2. Install Dependencies
+npm install
+# or
+yarn install
+
+3. Environment Variables
+
+Create a file named .env.local and add your credentials:
+
+NEXT_PUBLIC_SUPABASE_URL=https://<PROJECT-REF>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<YOUR_ANON_KEY>
+BREVO_SMTP_HOST=<YOUR_SMTP_HOST>
+BREVO_SMTP_PORT=<YOUR_SMTP_PORT>
+BREVO_SMTP_USER=<YOUR_SMTP_USER>
+BREVO_SMTP_PASS=<YOUR_SMTP_PASS>
+BREVO_FROM=<YOUR_BREVO_FROM>
+
+
+💡 The .env.local file is ignored by Git for security reasons.
+
+4. Run the Development Server
 npm run dev
 # or
 yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Then open http://localhost:3000
+ in your browser 🎉
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+🧱 Project Structure
+src/
+ ├─ app/
+ │   ├─ (app)/
+ │   │   ├─ home/
+ │   │   ├─ group/
+ │   │   ├─ create-trip/
+ │   │   ├─ trip/[tripId]/summary/
+ │   │   ├─ settings/
+ │   │   └─ calendar/
+ │   ├─ auth/
+ │   └─ layout.tsx
+ ├─ lib/
+ │   ├─ supabase/
+ │   └─ notifications.ts
+ ├─ components/
+ │   ├─ ui/
+ │   ├─ Sidebar.tsx
+ │   ├─ Topbar.tsx
+ │   └─ TripDatePicker.tsx
+ └─ styles/
 
-## Learn More
+🌐 Deployment Guide (Vercel)
 
-To learn more about Next.js, take a look at the following resources:
+Push your code to GitHub.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Go to Vercel Dashboard
+.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Click New Project → Import Repository.
 
-## Deploy on Vercel
+Set Framework Preset to Next.js.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Add environment variables (from .env.local).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy 🎉
+
+🧩 After deploy, configure Supabase Auth → URL Configuration:
+
+https://<your-vercel-app>.vercel.app/auth/callback
+
+🧾 Additional Config Files
+
+.eslintignore — Excludes folders from linting
+
+eslint.config.mjs — ESLint rules for consistent code style
+
+vercel.json — Vercel build configuration
