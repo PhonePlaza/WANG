@@ -1,4 +1,3 @@
-// src/components/Topbar.tsx  (Server Component)
 import { createClient } from '@/lib/supabase/server'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 

@@ -154,7 +154,7 @@ export async function notifyTripJoined(
 ///* ───────────────── trip join deadline passed ───────────────── */
 type TripMember = { user_id: string; status: string | null; name: string | null }
 
-/** ✅ แจ้งเตือนเมื่อถึงวันปิดรับสมัครของทริป — ส่งเฉพาะคนที่ JOINED */
+/** แจ้งเตือนเมื่อถึงวันปิดรับสมัครของทริป — ส่งเฉพาะคนที่ JOINED */
 export async function notifyTripJoinDeadline(tripId: number) {
   const supabase = await createClient()
 
@@ -200,7 +200,7 @@ export async function notifyTripJoinDeadline(tripId: number) {
 }
 
 
-/** ✅ แจ้งเตือนเมื่อถึงวันเริ่มทริป (date_range_start) */
+/**  แจ้งเตือนเมื่อถึงวันเริ่มทริป (date_range_start) */
 export async function notifyTripStart(tripId: number) {
   const supabase = await createClient()
 
@@ -253,7 +253,7 @@ export async function notifyTripStart(tripId: number) {
   return { ok: true, sent: recipients.length }
 }
 
-/** ✅ แจ้งเตือนเมื่อปิดโหวตทริปแล้ว */
+/**  แจ้งเตือนเมื่อปิดโหวตทริปแล้ว */
 export async function notifyVoteClosed(tripId: number) {
   const supabase = await createClient()
 
@@ -265,7 +265,7 @@ export async function notifyVoteClosed(tripId: number) {
     .single()
   if (tErr || !trip) return { ok: true, sent: 0 }
 
-  // ผู้รับ = สมาชิกของ "ทริปนี้" (จะให้เฉพาะ JOINED ก็เปลี่ยน onlyJoined: true)
+  // ผู้รับ = สมาชิกของ "ทริปนี้" 
   const members = await getTripMemberEmailsByTrip(tripId, { onlyJoined: true })
   const recipients = Array.from(new Set(members.map(m => m.email).filter(Boolean))) as string[]
   if (!recipients.length) return { ok: true, sent: 0 }

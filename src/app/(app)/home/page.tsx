@@ -19,8 +19,6 @@ export default function HomePage() {
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null)
   const [currentUser, setCurrentUser] = useState<any>(null)
 
-
-  // --- 1️⃣ Fetch groups that current user belongs to
   useEffect(() => {
     const fetchGroups = async () => {
       const {
@@ -35,7 +33,6 @@ export default function HomePage() {
       setCurrentUser(user)
       console.log('Current user:', user)
 
-      // Step 1: get group_ids where user is a member
       const { data: memberData, error: memberError } = await supabase
         .from('group_members')
         .select('group_id')
@@ -51,7 +48,6 @@ export default function HomePage() {
         return
       }
 
-      // Step 2: fetch group names for those IDs
       const groupIds = memberData.map((m) => m.group_id)
       const { data: groupData, error: groupError } = await supabase
         .from('group')
@@ -68,7 +64,6 @@ export default function HomePage() {
     fetchGroups()
   }, [])
 
-  // --- 2️⃣ Fetch trips for selected group
   useEffect(() => {
     if (!selectedGroupId) return
 
@@ -96,10 +91,8 @@ export default function HomePage() {
     fetchTrips()
   }, [selectedGroupId])
 
-  // --- 3️⃣ Render UI
   return (
     <>
-      {/* Group Selector */}
       {/* Group Selector */}
       <div className="flex items-center justify-between p-6">
         <DropdownMenu>
@@ -113,7 +106,7 @@ export default function HomePage() {
             {groups.map((g) => (
               <DropdownMenuItem
                 key={g.group_id}
-                onClick={() => setSelectedGroupId(g.group_id)}  // ← FIXED
+                onClick={() => setSelectedGroupId(g.group_id)}  
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               >
                 {g.group_name}

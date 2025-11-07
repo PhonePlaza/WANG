@@ -1,9 +1,3 @@
-// src/app/api/group/join-by-code/route.ts
-// API ตัวนี้ทำ 3 อย่าง:
-// 1) รับรหัสโค้ดกลุ่ม (8 ตัวอักษร/ตัวเลข)
-// 2) เรียก RPC fn_join_group เพื่อให้ผู้ใช้ที่ล็อกอินอยู่ "เข้ากลุ่ม"
-// 3) เมื่อเข้ากลุ่มสำเร็จ → ส่งอีเมลแจ้งสมาชิกเดิมในกลุ่ม (ยกเว้นคนที่เพิ่ง join)
-
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'

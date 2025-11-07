@@ -1,4 +1,3 @@
-// src/app/api/trip/run-start-reminder/route.ts
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
@@ -23,11 +22,9 @@ function todayYMD_AsiaBangkok() {
 export async function POST(req: Request) {
   const supabase = await createClient()
 
-  // อนุญาต override วันที่ตอนเทสต์: { "date": "YYYY-MM-DD" }
   const body = await req.json().catch(() => ({}))
   const targetDate = String(body?.date || todayYMD_AsiaBangkok())
 
-  // หา trips ที่เริ่มวันนี้ และยังไม่แจ้ง (รองรับค่า null)
   const { data: trips, error } = await supabase
     .from('trips')
     .select('trip_id')
@@ -63,7 +60,6 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, scanned: (trips || []).length, sent: sentTotal })
 }
 
-/** ให้ cron/health-call ยิงเป็น GET ได้ด้วย (proxy ไป POST) */
 export async function GET(req: Request) {
   return POST(req)
 }

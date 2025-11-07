@@ -1,5 +1,3 @@
-// src/app/api/notify/route.ts
-
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
@@ -8,21 +6,21 @@ import { getGroupMemberEmails, sendEmail } from '@/lib/email';
 
 export async function POST(req: Request) {
   try {
-    const { groupId, subject, html } = await req.json(); // รับค่า body
-    const gid = Number(groupId); // เก็บ groupId เป็น number
+    const { groupId, subject, html } = await req.json(); 
+    const gid = Number(groupId); 
 
     if (!gid) {
       return NextResponse.json({ error: 'groupId is required' }, { status: 400 });
     }
 
-    // ต้องล็อกอิน เพื่อให้ RPC รู้ว่า auth.uid() คือใคร
+    // ดึงข้อมูล user ที่ล็อกอินอยู่
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       return NextResponse.json({ error: 'Not logged in' }, { status: 401 });
     }
 
-    // RPC จะคืนสมาชิกเฉพาะกรุ๊ปที่ผู้เรียกเป็นสมาชิกจริง ๆ
+    // ดึงอีเมลสมาชิกในกลุ่ม
     const members = await getGroupMemberEmails(gid); // [{ email, full_name }]
     const emails = members.map(m => m.email).filter(Boolean);
 

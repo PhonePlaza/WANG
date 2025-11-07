@@ -6,13 +6,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import GroupDetail from "./GroupDetail";
 
-export const dynamic = "force-dynamic"; // กันการ prerender
-// export const revalidate = 0; // (ตัวเลือก) บังคับ dynamic เสมอ
+export const dynamic = "force-dynamic"; 
 
 type GroupRowUI = { id: number; name: string; code: string; members: number };
 
 const isValidCode = (code: string) => /^[A-Za-z0-9]{8}$/.test(code.trim());
 
+//---------- Modal Component ----------
 function Modal({
   open,
   onClose,
@@ -47,11 +47,11 @@ function Modal({
   );
 }
 
-/** เอา logic ทั้งหมดมาไว้ใน *Inner ซึ่งอยู่ใต้ <Suspense> */
+//---------- Main Page Component ----------
 function GroupPageInner() {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
-  const search = useSearchParams(); // <-- ใช้ได้เพราะอยู่ใต้ <Suspense>
+  const search = useSearchParams(); 
   const gid = search.get("gid");
   const groupId = gid ? Number(gid) : null;
 
@@ -112,7 +112,7 @@ function GroupPageInner() {
     await loadMyGroups();
   }
 
-  // ---------- Join โดยใช้ API ใหม่ ----------
+  // Join group by code 
   async function joinGroup() {
     const inputCode = code.trim();
 
@@ -156,7 +156,7 @@ function GroupPageInner() {
     setShowModal(false);
   };
 
-  // ---------- Detail mode (query ?gid=xxx) ----------
+  // ---------- Detail mode  ----------
   if (groupId) {
     return (
       <main className="min-h-screen w-full bg-neutral-50 overflow-x-hidden">

@@ -1,4 +1,3 @@
-// src/app/api/group/join/route.ts
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
@@ -14,13 +13,13 @@ export async function POST(req: Request) {
   const gid = Number(groupId)
   if (!gid) return NextResponse.json({ error: 'groupId is required' }, { status: 400 })
 
-  // 1) เพิ่มสมาชิกเข้ากลุ่ม (ปรับชื่อตาราง/คอลัมน์ให้ตรงของคุณ)
+  // 1) เพิ่มสมาชิกเข้ากลุ่ม (ปรับชื่อตาราง/คอลัมน์ให้ตรงกับฐานข้อมูล)
   const { error: joinErr } = await supabase
     .from('group_members')
     .insert({ group_id: gid, user_id: user.id })
   if (joinErr) return NextResponse.json({ error: joinErr.message }, { status: 400 })
 
-  // 2) แจ้งเตือนสมาชิกในกลุ่ม (ยกเว้นคนที่เพิ่ง join)
+  // 2) แจ้งเตือนสมาชิกคนอื่นในกลุ่มเพื่อบอกว่ามีคนเข้ากลุ่มใหม่
   const res = await notifyGroupJoined(gid, {
     id: user.id,
     email: user.email,

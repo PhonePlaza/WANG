@@ -5,13 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 
-/**
- * ==============================================================================
- * 1. STYLES, TYPES, & HELPERS
- * ==============================================================================
- */
-
-/** Custom CSS for animations */
+// custom CSS for animations
 const customStyles = `
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -19,7 +13,7 @@ const customStyles = `
 .animate-slideUp { animation: slideUp 0.3s ease-out; }
 `;
 
-/** Type definition for data from v_trip_overview or fallback query */
+//overview row type definition
 type OverviewRow = {
   trip_id: number;
   trip_name: string;
@@ -34,10 +28,7 @@ type OverviewRow = {
   member_count: number | string | null;
 };
 
-/**
- * Type definition for the trip data when directly querying the 'trips' table
- * (Used in the fallback logic).
- */
+//fallback type definition for trip row from Supabase
 type TripRowFallback = {
   trip_id: number;
   trip_name: string;
@@ -49,7 +40,7 @@ type TripRowFallback = {
   budget_per_person: number | null;
 };
 
-/** Type definition for the trip data displayed in the component */
+// DisplayTrip type for frontend use
 type DisplayTrip = {
   id: number;
   title: string;
@@ -64,27 +55,24 @@ type DisplayTrip = {
   days?: number | null;
 };
 
-/** Utility functions for colors and status */
+// color pool for trip display
 const colorPool = ["bg-blue-500", "bg-green-500", "bg-purple-500", "bg-orange-500", "bg-pink-500", "bg-indigo-500"];
 const colorFromId = (id: number) => colorPool[Math.abs(id) % colorPool.length];
 
-/** Helper function to get color based on trip status for borders/backgrounds */
+// get color based on trip status
 const getStatusColor = (s: DisplayTrip["status"]) =>
   s === "planning" ? "bg-yellow-500" : "bg-gray-500";
 
-/**
- * 💡 FIXED UTILITY FUNCTION: Converts nullable values from Supabase (number or string) to a number (0 if null/undefined).
- * This eliminates the use of 'any'.
- */
+// utility to convert nullable number/string to number
 const toNumber = (v: number | string | null | undefined): number => (
   (v === null || v === undefined) ? 0 : Number(v)
 );
 
 
 /**
- * ==============================================================================
+ * ==============================
  * 2. MAIN COMPONENT
- * ==============================================================================
+ * ==============================
  */
 
 export default function Calendar() {
@@ -109,11 +97,7 @@ export default function Calendar() {
   const [selectedDate, setSelectedDate] = useState("");
 
 
-  /**
-   * ----------------------------------------------------------------------------
-   * Effect: Session Check (Auth)
-   * ----------------------------------------------------------------------------
-   */
+  // this effect checks for user authentication status
   useEffect(() => {
     let cancel = false;
     (async () => {
@@ -139,12 +123,7 @@ export default function Calendar() {
   }, [supabase]);
 
 
-  /**
-   * ----------------------------------------------------------------------------
-   * Function: Fetch Trips
-   * * *** ⬇️ โค้ดที่แก้ไขแล้ว ⬇️ ***
-   * ----------------------------------------------------------------------------
-   */
+  // function to fetch trips for the user
   const fetchTrips = async () => {
     if (!userId) return;
 
@@ -152,7 +131,7 @@ export default function Calendar() {
       setLoading(true);
       setError(null);
 
-      // 1️⃣ ดึง trip_id ที่ user เป็นสมาชิก (เฉพาะที่ JOINED)
+      // use trip_ids from trip_members where user is a member and status is JOINED
       const { data: userTrips, error: userTripsErr } = await supabase
         .from("trip_members")
         .select("trip_id")
@@ -168,7 +147,7 @@ export default function Calendar() {
 
       const tripIds = userTrips.map((t) => t.trip_id);
 
-      // 2️⃣ ดึงข้อมูล trip ตาม tripIds
+      // use tripIds to fetch trip details from trips table
       const { data, error: tripsErr } = await supabase
         .from("trips")
         .select(`
@@ -180,7 +159,7 @@ export default function Calendar() {
 
       if (tripsErr) throw tripsErr;
 
-      const tripsData: TripRowFallback[] = data || []; 
+      const tripsData: TripRowFallback[] = data || [];
 
       if (tripsData.length === 0) {
         setTrips([]);
@@ -188,9 +167,9 @@ export default function Calendar() {
         return;
       }
 
-      // 2.5: ดึงชื่อ group จาก group_id ทั้งหมดที่ได้มา
+      // use group_ids from tripsData to fetch group names
       const groupIds = [...new Set(tripsData.map(t => t.group_id))];
-      
+
       const { data: groupsData, error: groupsErr } = await supabase
         .from("group") // <-- ‼️ แก้จาก "groups" เป็น "group"
         .select("group_id, group_name")
@@ -198,13 +177,13 @@ export default function Calendar() {
 
       if (groupsErr) throw groupsErr;
 
-      // สร้าง Map (ตัวค้นหา) เพื่อจับคู่ group_id -> group_name
+      // create a map of group_id to group_name
       const groupNameMap = new Map<number, string>();
       (groupsData || []).forEach(g => {
         groupNameMap.set(g.group_id, g.group_name);
       });
 
-      // 3️⃣ นับจำนวนสมาชิกแต่ละ trip (เฉพาะที่ JOINED)
+      // count members in each trip (only those with status JOINED)
       const { data: membersData, error: membersErr } = await supabase
         .from("trip_members")
         .select("trip_id")
@@ -218,7 +197,7 @@ export default function Calendar() {
         memberCounts.set(m.trip_id, (memberCounts.get(m.trip_id) || 0) + 1);
       });
 
-      // 4️⃣ map tripsData เป็น DisplayTrip
+      // map tripsData เป็น DisplayTrip
       const now = new Date();
       const display: DisplayTrip[] = tripsData.map((t) => {
         const startDate = new Date(t.date_range_start);
@@ -227,7 +206,7 @@ export default function Calendar() {
         return {
           id: t.trip_id,
           title: t.trip_name,
-          groupName: groupNameMap.get(t.group_id) || "Unknown Group", 
+          groupName: groupNameMap.get(t.group_id) || "Unknown Group",
           startDate,
           endDate,
           location: t.location,
@@ -253,14 +232,11 @@ export default function Calendar() {
   };
 
 
-  /**
-   * ----------------------------------------------------------------------------
-   * Effect: Trigger Fetch Trips when userId is available
-   * ----------------------------------------------------------------------------
-   */
-  useEffect(() => { 
+
+  //Effect: Trigger Fetch Trips when userId is available
+  useEffect(() => {
     if (userId) {
-      fetchTrips(); 
+      fetchTrips();
     }
   }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -271,20 +247,20 @@ export default function Calendar() {
    * ----------------------------------------------------------------------------
    */
   const getDaysInMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-  const getFirstDayOfMonth = (d: Date) => { 
+  const getFirstDayOfMonth = (d: Date) => {
     return new Date(d.getFullYear(), d.getMonth(), 1).getDay();
   };
-  const navigateMonth = (dir: number) => { 
-    const nd = new Date(currentDate); 
-    nd.setMonth(currentDate.getMonth() + dir); 
-    setCurrentDate(nd); 
+  const navigateMonth = (dir: number) => {
+    const nd = new Date(currentDate);
+    nd.setMonth(currentDate.getMonth() + dir);
+    setCurrentDate(nd);
   };
   const isToday = (date: number) => {
     const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
     const today = new Date();
     return checkDate.getFullYear() === today.getFullYear() &&
-           checkDate.getMonth() === today.getMonth() &&
-           checkDate.getDate() === today.getDate();
+      checkDate.getMonth() === today.getMonth() &&
+      checkDate.getDate() === today.getDate();
   };
   const isDateInTrip = (date: number, t: DisplayTrip) => {
     const d = new Date(currentDate.getFullYear(), currentDate.getMonth(), date);
@@ -307,23 +283,22 @@ export default function Calendar() {
     const daysInMonth = getDaysInMonth(currentDate);
     const firstDay = getFirstDayOfMonth(currentDate); // 0=Sunday, 1=Monday...
     const days: React.ReactNode[] = [];
-    
+
     // Add empty divs for the days before the 1st of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="h-24 border border-gray-200 bg-gray-50" />);
     }
-    
+
     // Render days of the month
     for (let date = 1; date <= daysInMonth; date++) {
       const dayTrips = getTripForDate(date);
       const today = isToday(date);
-      
+
       days.push(
-        <div 
-          key={date} 
-          className={`h-24 border border-gray-200 p-1 relative overflow-hidden ${
-            today ? "bg-blue-50 border-blue-300" : "bg-white"
-          }`}
+        <div
+          key={date}
+          className={`h-24 border border-gray-200 p-1 relative overflow-hidden ${today ? "bg-blue-50 border-blue-300" : "bg-white"
+            }`}
         >
           <div className={`text-sm font-medium ${today ? "text-blue-600" : "text-gray-900"}`}>
             {date}
@@ -336,10 +311,10 @@ export default function Calendar() {
                   key={`${trip.id}-${idx}`}
                   className={`text-xs px-1 py-0.5 rounded text-white truncate cursor-pointer hover:opacity-80 transition-opacity ${trip.color}`}
                   title={trip.title}
-                  onClick={(e) => { 
-                    e.stopPropagation(); 
-                    setSelectedTrip(trip); 
-                    setShowTripModal(true); 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedTrip(trip);
+                    setShowTripModal(true);
                   }}
                 >
                   {trip.title}
@@ -380,7 +355,7 @@ export default function Calendar() {
       <style dangerouslySetInnerHTML={{ __html: customStyles }} />
       <div className="min-h-screen bg-gray-100 p-6">
         <div className="max-w-6xl mx-auto">
-          
+
           {/* Header */}
           <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
             <div className="flex items-center justify-between">
@@ -397,8 +372,8 @@ export default function Calendar() {
               <p className="font-medium">Error occurred:</p>
               <p className="text-sm">{error}</p>
               {hasSession === false && (
-                <button 
-                  onClick={() => router.push("/auth")} 
+                <button
+                  onClick={() => router.push("/auth")}
                   className="mt-3 text-sm px-3 py-2 rounded-md bg-neutral-900 text-white hover:bg-neutral-800 transition-colors"
                 >
                   Sign In Again
@@ -409,32 +384,32 @@ export default function Calendar() {
 
           {/* Main Layout (Calendar + Sidebar) */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            
+
             {/* Calendar View */}
             <div className="lg:col-span-3">
               <div className="bg-white rounded-lg shadow-sm">
-                
+
                 {/* Calendar Navigation */}
                 <div className="p-6 border-b border-gray-200 flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900">
                     {currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                   </h2>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => navigateMonth(-1)} 
+                    <button
+                      onClick={() => navigateMonth(-1)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       aria-label="Previous month"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
-                    <button 
-                      onClick={() => setCurrentDate(new Date())} 
+                    <button
+                      onClick={() => setCurrentDate(new Date())}
                       className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                     >
                       Today
                     </button>
-                    <button 
-                      onClick={() => navigateMonth(1)} 
+                    <button
+                      onClick={() => navigateMonth(1)}
                       className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                       aria-label="Next month"
                     >
@@ -456,14 +431,14 @@ export default function Calendar() {
                       <p className="mb-3">No trips found in your calendar</p>
                       <p className="text-sm text-gray-400 mb-4">Create a new trip or join a group to find out more.</p>
                       <div className="flex gap-2">
-                        <button 
-                          onClick={() => router.push("/group")} 
+                        <button
+                          onClick={() => router.push("/group")}
                           className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
                         >
                           Manage Groups
                         </button>
-                        <button 
-                          onClick={() => router.push("/home")} 
+                        <button
+                          onClick={() => router.push("/home")}
                           className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                         >
                           Create New Trip
@@ -474,7 +449,7 @@ export default function Calendar() {
                     <>
                       {/* Day Labels */}
                       <div className="grid grid-cols-7 gap-0 mb-2">
-                        {["SUN","MON","TUE","WED","THU","FRI","SAT"].map((d, i) => (
+                        {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((d, i) => (
                           <div key={i} className="h-8 flex items-center justify-center">
                             <span className="text-sm font-medium text-gray-500">{d}</span>
                           </div>
@@ -492,7 +467,7 @@ export default function Calendar() {
 
             {/* Sidebar */}
             <div className="space-y-6">
-              
+
               {/* Trip Statistics */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Trip Statistics</h3>
@@ -503,15 +478,15 @@ export default function Calendar() {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Planning</span>
-                    <span className="font-semibold text-lg text-yellow-600">{trips.filter(t=>t.status==='planning').length}</span>
+                    <span className="font-semibold text-lg text-yellow-600">{trips.filter(t => t.status === 'planning').length}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Completed</span>
-                    <span className="font-semibold text-lg text-gray-600">{trips.filter(t=>t.status==='completed').length}</span>
+                    <span className="font-semibold text-lg text-gray-600">{trips.filter(t => t.status === 'completed').length}</span>
                   </div>
                 </div>
               </div>
-              
+
               {/* Upcoming Trips */}
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -527,11 +502,10 @@ export default function Calendar() {
                       .map((trip) => (
                         <div
                           key={trip.id}
-                          className={`p-3 border-l-4 ${
-                            trip.status === "planning"
+                          className={`p-3 border-l-4 ${trip.status === "planning"
                               ? "border-l-yellow-500"
                               : "border-l-gray-500"
-                          } bg-gray-50 rounded-r-lg cursor-pointer hover:bg-gray-100 transition`}
+                            } bg-gray-50 rounded-r-lg cursor-pointer hover:bg-gray-100 transition`}
                           onClick={() => {
                             setSelectedTrip(trip);
                             setShowTripModal(true);
@@ -576,8 +550,8 @@ export default function Calendar() {
               </div>
 
             </div>
-            
-            
+
+
             {/* ------------------------------------------------------------------ */}
             {/* Trip Detail Modal */}
             {/* ------------------------------------------------------------------ */}
@@ -605,9 +579,9 @@ export default function Calendar() {
                         <div>
                           <p className="text-sm text-gray-500">Date</p>
                           <p className="font-medium text-gray-900">
-                            {selectedTrip.startDate.toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}
+                            {selectedTrip.startDate.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
                             {selectedTrip.startDate.getTime() !== selectedTrip.endDate.getTime() &&
-                              ` - ${selectedTrip.endDate.toLocaleDateString("en-US",{month:"long",day:"numeric"})}`}
+                              ` - ${selectedTrip.endDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}`}
                           </p>
                           {selectedTrip.days && <p className="text-xs text-gray-500 mt-1">{selectedTrip.days} days</p>}
                         </div>
@@ -627,7 +601,7 @@ export default function Calendar() {
                         <div>
                           <p className="text-sm text-gray-500">Budget per person</p>
                           <p className="font-medium text-gray-900">
-                            {selectedTrip.budget && selectedTrip.budget > 0 
+                            {selectedTrip.budget && selectedTrip.budget > 0
                               ? `฿${Number(selectedTrip.budget).toLocaleString()}`
                               : <span className="text-gray-400">Not specified</span>
                             }
@@ -636,8 +610,8 @@ export default function Calendar() {
                       </div>
                     </div>
                     <div>
-                      <button 
-                        onClick={() => setShowTripModal(false)} 
+                      <button
+                        onClick={() => setShowTripModal(false)}
                         className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
                       >
                         Close
@@ -648,10 +622,6 @@ export default function Calendar() {
               </div>
             )}
 
-
-            {/* ------------------------------------------------------------------ */}
-            {/* Day Events Modal */}
-            {/* ------------------------------------------------------------------ */}
             {showDayEventsModal && (
               <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn" onClick={() => setShowDayEventsModal(false)}>
                 <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden transform animate-slideUp" onClick={(e) => e.stopPropagation()}>
@@ -664,15 +634,14 @@ export default function Calendar() {
                       {selectedDayTrips.map((trip, idx) => (
                         <div
                           key={`day-trip-${trip.id}-${idx}`}
-                          className={`border-l-4 ${
-                            trip.status === "planning"
+                          className={`border-l-4 ${trip.status === "planning"
                               ? "border-l-yellow-500"
                               : "border-l-gray-500"
-                          } bg-gray-50 p-4 rounded-r cursor-pointer hover:bg-gray-100 transition-colors`}
-                          onClick={() => { 
-                            setShowDayEventsModal(false); 
-                            setSelectedTrip(trip); 
-                            setShowTripModal(true); 
+                            } bg-gray-50 p-4 rounded-r cursor-pointer hover:bg-gray-100 transition-colors`}
+                          onClick={() => {
+                            setShowDayEventsModal(false);
+                            setSelectedTrip(trip);
+                            setShowTripModal(true);
                           }}
                         >
                           <div className="flex items-start justify-between">
@@ -683,9 +652,9 @@ export default function Calendar() {
                                 <div className="flex items-center gap-1"><Users className="w-4 h-4" /><span>{trip.members} people</span></div>
                                 <div className="flex items-center gap-1"><CalendarDays className="w-4 h-4" />
                                   <span>
-                                    {trip.startDate.toLocaleDateString("en-US",{day:"numeric",month:"short"})}
+                                    {trip.startDate.toLocaleDateString("en-US", { day: "numeric", month: "short" })}
                                     {trip.startDate.getTime() !== trip.endDate.getTime() &&
-                                      ` - ${trip.endDate.toLocaleDateString("en-US",{day:"numeric",month:"short"})}`}
+                                      ` - ${trip.endDate.toLocaleDateString("en-US", { day: "numeric", month: "short" })}`}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1">
@@ -701,8 +670,8 @@ export default function Calendar() {
                     </div>
                   </div>
                   <div className="p-6 border-t border-gray-200">
-                    <button 
-                      onClick={() => setShowDayEventsModal(false)} 
+                    <button
+                      onClick={() => setShowDayEventsModal(false)}
                       className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors">
                       Close
                     </button>

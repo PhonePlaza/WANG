@@ -99,7 +99,7 @@ function CreateTripInner() {
     );
 
     const handleCreateTrip = async (type: "custom" | "vote") => {
-        setIsLoading(true); // 👈 เริ่ม Loading
+        setIsLoading(true); 
         try {
             const budgetNumber = parseInt(tripBudget);
             const durationNumber = parseInt(tripDuration);
@@ -275,7 +275,7 @@ function CreateTripInner() {
             console.error(err);
             alert("เกิดข้อผิดพลาดในการสร้างทริป");
         } finally {
-            setIsLoading(false); // 👈 สิ้นสุด Loading
+            setIsLoading(false); 
         }
     };
 

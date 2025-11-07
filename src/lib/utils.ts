@@ -4,4 +4,4 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
-// รวม clsx + tailwind-merge ให้ง่ายในที่เดียว
+// รวม clsx + tailwind-merge 

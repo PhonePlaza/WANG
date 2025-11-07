@@ -1,11 +1,10 @@
-// src/app/api/trip/run-vote-close-digest/route.ts
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { notifyVoteClosed } from '@/lib/notifications'
 
-/** คืน YYYY-MM-DD ตามเวลา Asia/Bangkok (เหมาะกับคอลัมน์ DATE) */
+
 function todayYMD_AsiaBangkok() {
   const d = new Date()
   const parts = new Intl.DateTimeFormat('th-TH', {
@@ -23,11 +22,9 @@ function todayYMD_AsiaBangkok() {
 export async function POST(req: Request) {
   const supabase = await createClient()
 
-  // อนุญาตให้ override วันที่ตอนเทสต์: { "date": "YYYY-MM-DD" }
   const body = await req.json().catch(() => ({}))
   const targetDate = String(body?.date || todayYMD_AsiaBangkok())
 
-  // หาทริปที่มีวันปิดโหวต = targetDate และยังไม่เคยส่ง (รองรับ null/false)
   const { data: trips, error } = await supabase
     .from('trips')
     .select('trip_id')
@@ -48,7 +45,7 @@ export async function POST(req: Request) {
 
   for (const t of trips) {
     try {
-      // ส่งให้ "สมาชิกทริป" เท่านั้น (ฟังก์ชันนี้จะดึงอีเมลจาก trip_members)
+      // ส่งให้ สมาชิกทริป เท่านั้น (ฟังก์ชันนี้จะดึงอีเมลจาก trip_members)
       const res = await notifyVoteClosed(Number(t.trip_id))
       sentTotal += res?.sent || 0
       processedIds.push(Number(t.trip_id))
@@ -69,7 +66,6 @@ export async function POST(req: Request) {
   return NextResponse.json({ ok: true, scanned: trips.length, sent: sentTotal })
 }
 
-/** ให้ยิงแบบ GET ได้ด้วย (สะดวกสำหรับ cron/health check); ภายในเรียก POST */
 export async function GET(req: Request) {
   return POST(req)
 }

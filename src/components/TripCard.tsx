@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation' // App Router navigation
+import { useRouter } from 'next/navigation' 
 import { Label } from '@/components/ui/label'
 
 export default function TripCard({ trip, currentUserId }: { trip: any, currentUserId: string }) {
@@ -54,10 +54,10 @@ export default function TripCard({ trip, currentUserId }: { trip: any, currentUs
     }
 
     alert('Trip deleted successfully.')
-    router.refresh() // reload current page
+    router.refresh() 
   }
 
-  // determine button variant based on status
+
   let buttonVariant: 'default' | 'outline' | 'ghost' | 'success' | 'success2' | 'destructive' = 'default'
   let labelVariant: 'bg-green-300' | 'bg-red-300' | 'bg-yellow-300' | 'bg-gray-300' = 'bg-gray-300'
   if (status === 'JOINED') {
@@ -108,7 +108,7 @@ export default function TripCard({ trip, currentUserId }: { trip: any, currentUs
                 : 'Join'}
         </Button>
 
-        {/* View Details Button */}
+        
         <Button  className='flex-1'variant="outline" onClick={handleViewDetail}>
           View Details
         </Button>

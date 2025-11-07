@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import LogoutButton from '@/components/ui/LogoutButton' // ปุ่ม client ที่คุณมีอยู่แล้ว
+import LogoutButton from '@/components/ui/LogoutButton' 
 
 function initials(nameOrEmail?: string) {
   if (!nameOrEmail) return 'U'

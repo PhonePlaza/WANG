@@ -9,7 +9,7 @@ type MemberRow   = { user_id: string; email: string | null };
 export default function GroupDetail({
   groupId,
   onBack,
-  onLeft, // เรียกให้ parent reload list หลังออกสำเร็จ
+  onLeft, 
 }: {
   groupId: number;
   onBack: () => void;
@@ -69,7 +69,7 @@ export default function GroupDetail({
       alert(error.message ?? 'ออกจากกลุ่มไม่สำเร็จ');
       return;
     }
-    // data === true หมายถึงลบกลุ่มแล้ว (สมาชิกเหลือ 0)
+    
     if (onLeft) await onLeft();
     onBack();
   }

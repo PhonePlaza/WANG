@@ -1,4 +1,3 @@
-// src/app/api/trip/notify-created/route.ts
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
@@ -25,8 +24,7 @@ export async function POST(req: Request) {
   if (!groupId || !tripName) {
     return NextResponse.json({ error: 'groupId and tripName are required' }, { status: 400 })
   }
-
-  // ➜ ส่งต่อเป็น string YYYY-MM-DD ตรง ๆ ห้าม new Date(...).toISOString()
+  // ส่งแจ้งเตือนสมาชิกในกลุ่มเกี่ยวกับทริปที่สร้างใหม่
   const result = await notifyTripCreated({ groupId, tripName, dateStart, dateEnd })
   return NextResponse.json(result)
 }

@@ -17,11 +17,10 @@ function todayYMD_AsiaBangkok() {
   return `${y}-${m}-${dd}`
 }
 
-// รวม logic ของ 3 งานไว้ที่เดียว
 async function runAllForDate(targetDate: string) {
   const supabase = await createClient()
 
-  // 1) JOIN DEADLINE (วันนี้ + ยังไม่ส่ง)
+  // 1) JOIN DEADLINE 
   const { data: tripsDeadline } = await supabase
     .from('trips')
     .select('trip_id')
@@ -41,7 +40,7 @@ async function runAllForDate(targetDate: string) {
       .in('trip_id', doneDeadline)
   }
 
-  // 2) TRIP START TODAY (และยังไม่ส่ง)
+  // 2) TRIP START 
   const { data: tripsStart } = await supabase
     .from('trips')
     .select('trip_id')
@@ -61,7 +60,7 @@ async function runAllForDate(targetDate: string) {
       .in('trip_id', doneStart)
   }
 
-  // 3) VOTE CLOSE TODAY (และยังไม่ส่ง)
+  // 3) VOTE CLOSE  
   const { data: tripsVote } = await supabase
     .from('trips')
     .select('trip_id')

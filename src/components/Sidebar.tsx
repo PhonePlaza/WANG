@@ -11,7 +11,6 @@ const NAV = [
   { href: '/settings', label: 'setting', icon: Settings },
 ]
 
-// ตัวช่วยรวม class แบบง่าย ๆ (ถ้าไม่มี utils/cn)
 function cx(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ')
 }
@@ -20,7 +19,6 @@ export default function Sidebar() {
   const pathname = usePathname()
 
   return (
-    // fixed = ติดขอบซ้ายทั้งจอ, h-dvh = สูงเท่าหน้าจอ
     <aside className="fixed left-0 top-0 z-40 h-dvh w-60 border-r bg-white">
       <div className="flex h-full flex-col">
         {/* โลโก้ */}
@@ -38,7 +36,7 @@ export default function Sidebar() {
                   'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm capitalize transition',
                   'border border-transparent',
                   active
-                    ? // สไตล์ปุ่มที่เลือกอยู่ (ตามภาพมีเงาเส้นล่างจาง ๆ)
+                    ? 
                       'bg-zinc-100 font-semibold shadow-[inset_0_-2px_0_rgba(0,0,0,0.12)]'
                     : 'hover:bg-zinc-50'
                 )}
@@ -53,8 +51,6 @@ export default function Sidebar() {
             )
           })}
         </nav>
-
-        {/* footer (ถ้ามี) */}
         <div className="p-4 text-xs text-zinc-400">v0.1.0</div>
       </div>
     </aside>

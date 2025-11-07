@@ -1,4 +1,3 @@
-// src/app/api/trip/member-joined/route.ts
 export const runtime = 'nodejs'
 
 import { NextResponse } from 'next/server'
@@ -14,7 +13,7 @@ export async function POST(req: Request) {
   const tripId = Number(body?.tripId)
   if (!tripId) return NextResponse.json({ error: 'tripId is required' }, { status: 400 })
 
-  // ดึงชื่อจาก profiles ถ้ามี (เพื่อให้ email ดูดีขึ้น)
+  // ดึงชื่อจาก profiles (ตารางที่เก็บข้อมูลผู้ใช้)
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, email')

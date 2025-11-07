@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar />
 
       <main className="min-h-dvh pl-60 p-6">
-        {/* Top bar ชิดขวา  */}
+        {/* Topbar */}
         <div className="mb-4 flex justify-end">
           <Topbar />
         </div>
