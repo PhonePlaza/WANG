@@ -2,10 +2,6 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // ✅ ไม่ให้ล้มเหลวเพราะ ESLint ตอน build (ยังคงแสดง Warning ได้)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   // ✅ ไม่ให้ล้มเหลวเพราะ TypeScript error ตอน build (ค่อยแก้ทีหลังได้)
   typescript: {
     ignoreBuildErrors: true,
@@ -18,3 +14,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
