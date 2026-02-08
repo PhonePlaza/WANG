@@ -1,45 +1,50 @@
-🌏 WANG — Group Trip Planning Web Application
+# 🗺️ WANG — Group Trip Planning
 
-WANG is a web application for collaborative trip planning, designed to make organizing group trips easier and more fun 🎒✈️
-Users can create groups, propose and vote for trip locations, set budgets, check availability, and receive email notifications for important events.
+> **Plan your next adventure together.**  
+> The easiest way to organize trips with friends.
 
-Built with Next.js 14, Supabase, Brevo (Sendinblue), and deployed on Vercel.
+� **Live Demo:** [wang-nine-gamma.vercel.app](https://wang-nine-gamma.vercel.app/)
 
-🚀 Tech Stack
-Category            - Technology
-Frontend / Backend	- Next.js 14 (App Router)
-Database & Auth	    - Supabase
-Email Notification	- Brevo (Sendinblue)
-Deployment	        - Vercel
-Language	        - TypeScript
-Styling	            - Tailwind CSS
+---
 
-🧩 Main Features ---------------
-✅ Google Sign-In Authentication
-👥 Create and Join Groups
-🗓️ Plan Trips with Shared Calendar
-📍 Propose & Vote for Locations
-💰 Set Minimum Budget per Person
-📧 Email Notifications for:
-    - New trip created
-    - New member joined
-    - Trip deadline approaching
-    - Trip start reminder
+## ✨ Features
 
-⚙️ Getting Started
-1. Clone the Repository
+- 🔐 **Google Sign-In** — Easy authentication via Supabase
+- 👥 **Create & Join Groups** — Collaborate with friends
+- 🗓️ **Shared Calendar** — Plan trips with availability checking
+- 📍 **Propose & Vote** — Vote on trip locations
+- 💰 **Budget Tracking** — Set minimum budget per person
+- 📧 **Email Notifications** — Get notified for trip events
+
+---
+
+## 🚀 Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Database & Auth | Supabase |
+| Email | Brevo (Sendinblue) |
+| Styling | Tailwind CSS |
+| Deployment | Vercel |
+
+---
+
+## ⚡ Getting Started
+
+### 1. Clone & Install
+
+```bash
 git clone https://github.com/<your-username>/wang.git
 cd wang
-
-2. Install Dependencies
 npm install
-# or
-yarn install
+```
 
-3. Environment Variables
+### 2. Environment Variables
 
-Create a file named .env.local and add your credentials:
+Create `.env.local`:
 
+```env
 NEXT_PUBLIC_SUPABASE_URL=https://<PROJECT-REF>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<YOUR_ANON_KEY>
 BREVO_SMTP_HOST=<YOUR_SMTP_HOST>
@@ -47,64 +52,48 @@ BREVO_SMTP_PORT=<YOUR_SMTP_PORT>
 BREVO_SMTP_USER=<YOUR_SMTP_USER>
 BREVO_SMTP_PASS=<YOUR_SMTP_PASS>
 BREVO_FROM=<YOUR_BREVO_FROM>
+```
 
+### 3. Run Development Server
 
-💡 The .env.local file is ignored by Git for security reasons.
-
-4. Run the Development Server
+```bash
 npm run dev
-# or
-yarn dev
+```
 
+Open [http://localhost:3000](http://localhost:3000) 🎉
 
-Then open http://localhost:3000
- in your browser 🎉
+---
 
-🧱 Project Structure
+## 📁 Project Structure
+
+```
 src/
- ├─ app/
- │   ├─ (app)/
- │   │   ├─ home/
- │   │   ├─ group/
- │   │   ├─ create-trip/
- │   │   ├─ trip/[tripId]/summary/
- │   │   ├─ settings/
- │   │   └─ calendar/
- │   ├─ auth/
- │   └─ layout.tsx
- ├─ lib/
- │   ├─ supabase/
- │   └─ notifications.ts
- ├─ components/
- │   ├─ ui/
- │   ├─ Sidebar.tsx
- │   ├─ Topbar.tsx
- │   └─ TripDatePicker.tsx
- └─ styles/
+├── app/
+│   ├── (app)/          # Protected routes
+│   │   ├── home/
+│   │   ├── group/
+│   │   ├── create-trip/
+│   │   └── trip/[tripId]/
+│   └── auth/           # Authentication pages
+├── components/         # UI components
+├── lib/                # Utilities & Supabase client
+└── proxy.ts            # Auth middleware
+```
 
-🌐 Deployment Guide (Vercel)
+---
 
-Push your code to GitHub.
+## 🌐 Deploy to Vercel
 
-Go to Vercel Dashboard
-.
+1. Push to GitHub
+2. Import project on [Vercel](https://vercel.com)
+3. Add environment variables
+4. Deploy! 🚀
 
-Click New Project → Import Repository.
+> **Note:** Configure Supabase Auth URL to:  
+> `https://<your-app>.vercel.app/auth/callback`
 
-Set Framework Preset to Next.js.
+---
 
-Add environment variables (from .env.local).
+## 📄 License
 
-Deploy 🎉
-
-🧩 After deploy, configure Supabase Auth → URL Configuration:
-
-https://<your-vercel-app>.vercel.app/auth/callback
-
-🧾 Additional Config Files
-
-.eslintignore — Excludes folders from linting
-
-eslint.config.mjs — ESLint rules for consistent code style
-
-vercel.json — Vercel build configuration
+MIT
